@@ -1,0 +1,13 @@
+[Unit]
+Description=Postgresql Log Way
+
+[Service]
+WorkingDirectory=/tmp
+ExecStart=/bin/java -Dlog4j.configurationFile=/etc/pglogway-log4j2.properties -cp /opt/pglogway/pglogway-jar-with-dependencies.jar pglogway.Main
+User=pglogway
+Type=simple
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
