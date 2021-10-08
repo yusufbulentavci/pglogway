@@ -3,7 +3,7 @@ Description=Postgresql Log Way
 
 [Service]
 WorkingDirectory=/tmp
-ExecStart=/bin/java -Dlog4j.configurationFile=/etc/pglogway-log4j2.properties -cp /opt/pglogway/pglogway-jar-with-dependencies.jar pglogway.Main
+ExecStart=/bin/java -Dlog4j.configurationFile=/etc/pglogway-log4j2.properties -cp /usr/local/share/pglogway/pglogway-jar-with-dependencies.jar pglogway.Main
 User=pglogway
 Type=simple
 Restart=on-failure

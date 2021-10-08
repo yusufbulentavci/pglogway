@@ -35,15 +35,24 @@ public class NoElasticTest extends ScenarioTest {
 
 		LogDir ld = new LogDir(confDir, 1, 1);
 
+		
+		
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					Thread.sleep(1000);
+					assertTrue(new File("/tmp/noelastic/postgresql-2021-02-08_10_31_38.csv-done").exists());
+					assertTrue(new File("/tmp/noelastic/postgresql-2021-02-08_10_31_39.csv").exists());
+					Thread.sleep(2500);
+					assertTrue(!new File("/tmp/noelastic/postgresql-2021-02-08_10_31_39.csv-done").exists());
+					
 					File file = new File("/tmp/noelastic/postgresql-2021-02-08_10_32_00.csv-wait");
 					file.renameTo(new File("/tmp/noelastic/postgresql-2021-02-08_10_32_00.csv"));
 					System.out.println("!!Test Renamed waiting");
+					
+					
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -53,7 +62,7 @@ public class NoElasticTest extends ScenarioTest {
 
 		ld.run();
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

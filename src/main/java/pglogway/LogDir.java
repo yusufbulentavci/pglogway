@@ -128,6 +128,13 @@ public class LogDir implements Runnable {
 //				return !json.exists();
 			}
 		});
+
+		if (allCsvs == null) {
+			logger.error("Access problem to directory:" + logDir.getAbsolutePath());
+			System.exit(10);
+			return false;
+		}
+
 		List<String> csvs = new ArrayList<String>();
 		for (String string : allCsvs) {
 			csvs.add(string);
@@ -139,14 +146,14 @@ public class LogDir implements Runnable {
 		}
 
 		if (processCsvFileName != null && csvs.get(0).equals(processCsvFileName)) {
-			logger.info("Json file is not created yet; continue with same file:" + processCsvFileName);
+			logger.debug("Json file is not created yet; continue with same file:" + processCsvFileName);
 			return false;
 		}
 		if (makeChange) {
 			processCsvFileName = csvs.get(0);
 			this.taken = false;
 			// Bug:
-			if (!confDir.getElasticDir() && logFile == null) {
+			if (!confDir.getElasticDir() && logFile == null && csvs.size() > 1) {
 				File csvFile = new File(logDir, processCsvFileName);
 				csvFile.renameTo(new File(logDir, processCsvFileName + "-done"));
 				logger.info("Renamed:" + csvFile.getAbsolutePath());
