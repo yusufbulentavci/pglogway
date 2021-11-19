@@ -214,6 +214,7 @@ public class ElasticPush {
 		} catch (IOException er) {
 			logger.error("createIndex", er);
 			close();
+			Main.fatal();
 			throw new RuntimeException("Index couldnt be created:" + indexName, er);
 		}
 	}
@@ -225,6 +226,7 @@ public class ElasticPush {
 				highClient.close();
 			} catch (IOException e) {
 				logger.error("close", e);
+				Main.fatal();
 			}
 		}
 	}
@@ -316,6 +318,7 @@ public class ElasticPush {
 			highClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 		} catch (IOException e) {
 			logger.error("flush", e);
+			Main.fatal();
 			try {
 				logger.error("Sleeping for a minute after error");
 				Thread.sleep(60000);

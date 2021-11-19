@@ -86,6 +86,7 @@ public class Gzip {
 			return true;
 		} catch (IOException e) {
 			logger.error("Failed to zip file:" + file.getAbsolutePath(), e);
+			Main.fatal();
 			return false;
 		}
 	}

@@ -77,6 +77,7 @@ public class LogCsvReader {
 			}
 		} catch (Exception e) {
 			tailer.error(this, "Fatal error reading log file, log tailing has stopped.", e);
+			Main.fatal();
 		}
 		// dispose();
 	}
@@ -95,6 +96,7 @@ public class LogCsvReader {
 					raf.seek(_filePointer);
 				} catch (IOException e1) {
 					logger.error("readCsvLine", e1);
+					Main.fatal();
 				}
 			}
 		}

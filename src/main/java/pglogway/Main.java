@@ -43,6 +43,14 @@ public class Main {
 			it.status(terminal);
 		}
 	}
+	
+	public static void fatal() {
+		if(one==null)
+			return;
+		if(one.shuttingDown)
+			return;
+		System.exit(-1);
+	}
 
 	protected void shutdownHook() {
 		logger.info("Shutdown signal detected");

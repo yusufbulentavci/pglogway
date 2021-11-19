@@ -78,6 +78,7 @@ public class LogFile {
 			@Override
 			public void error(LogCsvReader logCsvReader, String string, Exception e) {
 				logger.error("LogFile error:"+LogFile.this.csvFile+" Msg:"+string, e);
+				Main.fatal();
 				LogFile.this.error = true;
 				LogLine ll=new LogLine(formatter, logCsvReader.csvInd, "ERROR", "LOG_CSV_PARSE", string, confDir.getPortInt());
 				processNoSession(ll);

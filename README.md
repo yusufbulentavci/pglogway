@@ -85,3 +85,6 @@ No elastic option added
 duration parse duzeltildi
 mesaja host.name, postgresql.log.port eklendi
 linux kullanicisi artik pglogway
+2.5.1
+hata olustugunda uygulama log yazarak kendisini kapatiyor
+

@@ -120,6 +120,7 @@ public class Store {
 					}
 				} catch (IOException e1) {
 					logger.error("Failed make directory for host" + host, e1);
+					Main.fatal();
 					return false;
 				}
 			}

@@ -145,6 +145,7 @@ public class ExtraFileUtils {
 			Files.getFileAttributeView(p, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
 		} catch (IOException e) {
 			logger.error("Failed to chwon:"+f, e);
+			Main.fatal();
 			throw new RuntimeException(e);
 		}
 	}
