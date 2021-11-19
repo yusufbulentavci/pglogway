@@ -18,6 +18,8 @@ import net.nbug.hexprobe.server.telnet.EasyTerminal;
  *
  */
 public class Main {
+	public static String version = "2.5.1";
+
 	public static boolean testing = false;
 
 	static final Logger logger = LogManager.getLogger(Main.class.getName());
@@ -29,6 +31,7 @@ public class Main {
 	private static Main one;
 
 	public static void main(String[] args) {
+		logger.info("PgLogway is starting up. Version:" + version);
 		one = new Main();
 		Configurator.initialize(null, "/etc/pglogway-log4j2.properties");
 		one.mainIn(args);
@@ -43,11 +46,11 @@ public class Main {
 			it.status(terminal);
 		}
 	}
-	
+
 	public static void fatal() {
-		if(one==null)
+		if (one == null)
 			return;
-		if(one.shuttingDown)
+		if (one.shuttingDown)
 			return;
 		System.exit(-1);
 	}
@@ -64,10 +67,9 @@ public class Main {
 		Telnet.terminate();
 	}
 
-
 	public void mainIn(String[] args) {
 		one = this;
-		
+
 		try {
 			Telnet.start();
 		} catch (IOException e1) {
@@ -118,8 +120,8 @@ public class Main {
 		while (!shuttingDown) {
 			try {
 				Calendar oldday = Calendar.getInstance(); // today
-				Integer hour=oldday.get(Calendar.HOUR_OF_DAY);
-				logger.info("Maintain task is running for hour:"+hour);
+				Integer hour = oldday.get(Calendar.HOUR_OF_DAY);
+				logger.info("Maintain task is running for hour:" + hour);
 				for (LogDir ld : runningDirs) {
 					ld.maintain(hour);
 					ld.report();

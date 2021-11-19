@@ -17,6 +17,14 @@ public class Telnet {
 				terminal.flush();
 			}
 		});
+		
+		srv.registerCommand("version", new Command() {
+			@Override
+			public void execute(String name, String argument, EasyTerminal terminal) throws IOException {
+				terminal.writeLine("Version:"+Main.version);
+				terminal.flush();
+			}
+		});
 
 		srv.start(2300);
 	}
