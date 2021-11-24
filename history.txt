@@ -1,0 +1,9 @@
+rpmbuild -bb --target noarch rpmbuild/SPECS/pglogway.spec
+
+
+
+/usr/bin/java
+
+
+
+chmod u+x /var/log/pglogway

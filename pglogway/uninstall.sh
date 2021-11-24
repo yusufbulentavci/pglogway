@@ -5,7 +5,7 @@ systemctl disable pglogway
 
 rm -f /etc/pglogway.ini /etc/pglogway-log4j2.properties
 	
-rm -rf /opt/pglogway
+rm -rf /usr/local/share/pglogway
 rm -rf /var/log/pglogway
 
 

@@ -1,5 +1,5 @@
 Name:           pglogway
-Version:        2.5.0
+Version:        2.5.1
 Release:        1%{?dist}
 Summary:        Postgresql log i) compress and send logs to backup machine. ii) tail,filter,merge and send to elastic stack
 License:        Apache-2.0
