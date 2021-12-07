@@ -18,7 +18,7 @@ import net.nbug.hexprobe.server.telnet.EasyTerminal;
  *
  */
 public class Main {
-	public static String version = "2.5.4";
+	public static String version = "2.6.1";
 
 	public static boolean testing = false;
 

@@ -93,7 +93,7 @@ public class LogDir implements Runnable {
 				}
 				continue;
 			}
-			if (this.confDir.getElasticDir()) {
+			if (this.confDir.getElasticDir() || this.confDir.getAlarm()) {
 				if (processCsvFileName != null) {
 					status = "processing:" + processCsvFileName;
 

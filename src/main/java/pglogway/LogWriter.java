@@ -21,6 +21,7 @@ public class LogWriter {
 	private final String jsonFileName;
 
 	private final ElasticPush elasticPush;
+	private final Alarm alarm;
 
 	private final File csvFile;
 
@@ -32,12 +33,13 @@ public class LogWriter {
 
 	private final ConfDir confDir;
 
+
 	public LogWriter(File dir, String jsonFileName, String csvFileName, ConfDir confDir) {
 		this.jsonFileName = jsonFileName;
 		this.file = new File(dir, jsonFileName);
 		this.csvFileName = csvFileName;
 		this.csvFile = new File(dir, csvFileName);
-		this.confDir=confDir;
+		this.confDir = confDir;
 
 		if (!csvFileName.startsWith("postgresql-")) {
 			throw new RuntimeException("Unexpected file name, should be start with postgres-:" + csvFileName);
@@ -57,9 +59,22 @@ public class LogWriter {
 
 			this.hour = Integer.parseInt(m.group(4));
 
-			this.elasticPush = new ElasticPush(confDir, year, month, day, hour);
-			if (!Main.testing)
-				this.elasticPush.connect();
+			if (confDir.getElasticDir()) {
+				this.elasticPush = new ElasticPush(confDir, year, month, day, hour);
+			} else {
+				this.elasticPush = null;
+			}
+			
+			if(confDir.getAlarm()) {
+				this.alarm=new Alarm(confDir.getAlarmLevel());
+			}else {
+				this.alarm = null;
+			}
+
+			if (!Main.testing) {
+				if (this.elasticPush != null)
+					this.elasticPush.connect();
+			}
 		} else {
 			throw new RuntimeException("Unexpected file name, should be start with postgres-:" + csvFileName);
 		}
@@ -113,10 +128,14 @@ public class LogWriter {
 
 	public void write(LogLine ll) {
 //		logger.info(ll.toJson(fn).toString());
+		if(this.alarm!=null) {
+			this.alarm.check(ll);
+		}
 		if (filtered(ll))
 			return;
 		if (!Main.testing) {
-			this.elasticPush.push(ll.toJson(csvFileName).toMap());
+			if (this.elasticPush != null)
+				this.elasticPush.push(ll.toJson(csvFileName).toMap());
 		}
 
 		if (Main.testing) {
@@ -142,24 +161,24 @@ public class LogWriter {
 	}
 
 	private boolean filtered(LogLine ll) {
-		if(confDir.getFilterCommand()!=null && ll.command_tag!=null) {
-			if(confDir.getFilterCommand().filter(ll.command_tag))
+		if (confDir.getFilterCommand() != null && ll.command_tag != null) {
+			if (confDir.getFilterCommand().filter(ll.command_tag))
 				return true;
 		}
-		if(confDir.getFilterDb()!=null && ll.database_name!=null) {
-			if(confDir.getFilterDb().filter(ll.database_name))
+		if (confDir.getFilterDb() != null && ll.database_name != null) {
+			if (confDir.getFilterDb().filter(ll.database_name))
 				return true;
 		}
-		if(confDir.getFilterUser()!=null && ll.user_name!=null) {
-			if(confDir.getFilterUser().filter(ll.user_name))
+		if (confDir.getFilterUser() != null && ll.user_name != null) {
+			if (confDir.getFilterUser().filter(ll.user_name))
 				return true;
 		}
-		if(confDir.getFilterLevel()!=null && ll.error_severity!=null) {
-			if(confDir.getFilterCommand().filter(ll.error_severity))
+		if (confDir.getFilterLevel() != null && ll.error_severity != null) {
+			if (confDir.getFilterCommand().filter(ll.error_severity))
 				return true;
 		}
-		if(confDir.getFilterMinDuration()!=null && ll.getDuration()!=null) {
-			if(confDir.getFilterMinDuration()>ll.getDuration().doubleValue())
+		if (confDir.getFilterMinDuration() != null && ll.getDuration() != null) {
+			if (confDir.getFilterMinDuration() > ll.getDuration().doubleValue())
 				return true;
 		}
 		return false;
@@ -168,9 +187,10 @@ public class LogWriter {
 	public void close() {
 		logger.info("LogFile close:" + csvFile);
 
-		if (!Main.testing)
-			this.elasticPush.close();
-
+		if (!Main.testing) {
+			if (this.elasticPush != null)
+				this.elasticPush.close();
+		}
 		if (Main.testing) {
 			try {
 				this.fileWriter.close();
@@ -187,17 +207,20 @@ public class LogWriter {
 	}
 
 	public void beforeSleeping() {
-		if (!Main.testing)
-			this.elasticPush.flush();
+		if (!Main.testing) {
+			if (this.elasticPush != null)
+				this.elasticPush.flush();
+		}
 
 	}
 
 	public void checkExpiredIndexes() {
-		this.elasticPush.checkExpiredIndexes();
+		if (this.elasticPush != null)
+			this.elasticPush.checkExpiredIndexes();
 	}
 
 	public int getElasticPushed() {
-		if(this.elasticPush==null)
+		if (this.elasticPush == null)
 			return 0;
 		return this.elasticPush.getPushed();
 	}

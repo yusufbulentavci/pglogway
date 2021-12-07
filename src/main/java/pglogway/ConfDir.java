@@ -32,12 +32,14 @@ public class ConfDir {
 	private final FilterByProp filterLevel;
 	private final Double filterMinDuration;
 	private final Boolean elasticDir;
+	private final Boolean alarm;
+	private final String alarmLevel;
 
 	public ConfDir(Boolean elasticDir, ElasticCon econ, String path, String cluster, String port, int elasticExpireDays,
 			HourList noZip, HourList noCopy, int letLogStayInMins, int hourlyGzipTimeoutInMins,
 			int hourlyStoreTimeoutInMins, String storeMethod, String storeHost, String storePath,
 			FilterByProp filterCommmand, FilterByProp filterDb, FilterByProp filterUser, FilterByProp filterLevel,
-			Double filterMinDuration) {
+			Double filterMinDuration, Boolean alarm, String alarmlevel) {
 		this.elasticDir = elasticDir == null ? false : elasticDir;
 		this.econ = econ;
 		this.path = path;
@@ -57,7 +59,8 @@ public class ConfDir {
 		this.filterUser = filterUser;
 		this.filterLevel = filterLevel;
 		this.filterMinDuration = filterMinDuration;
-
+		this.alarm=alarm;
+		this.alarmLevel = alarmlevel;
 	}
 
 	public String getPath() {
@@ -164,5 +167,13 @@ public class ConfDir {
 			logger.error("Can not parse port:"+port, e);
 			return -1;
 		}
+	}
+
+	public Boolean getAlarm() {
+		return alarm!=null && alarm;
+	}
+
+	public String getAlarmLevel() {
+		return alarmLevel;
 	}
 }

@@ -17,6 +17,10 @@ public class Ini {
 		this.file = new IniFile(fn);
 
 		int expireDays = this.file.getInt("global", "expiredays", 14);
+		
+		Boolean alarm=this.file.getBoolean("global", "alarm", false);
+		String alarmlevel = this.file.getString("global", "alarmlevel", null);
+		
 
 		Boolean elastic = this.file.getBoolean("global", "elastic", null);
 		String elasticHost = this.file.getString("global", "elastichost", "localhost");
@@ -109,7 +113,7 @@ public class Ini {
 
 			ConfDir cd = new ConfDir(elasticDir, econ, path, cluster, port, dirExpireDays, snozip, snocopu, sletLogStayInMins,
 					shourlyGzipTimeoutInMins, shourlyStoreTimeoutInMins, sstoremethod, sstorehost, sstorepath,
-					cfiltercommand, cfilterdb, cfilteruser, cfilterlevel, sfilterminduration);
+					cfiltercommand, cfilterdb, cfilteruser, cfilterlevel, sfilterminduration, alarm, alarmlevel);
 
 			String[] ms = new String[] { "ssh", "remove" };
 			if (cd.getStoreMethod() == null || !Arrays.stream(ms).anyMatch(x -> x.equals(cd.getStoreMethod()))) {

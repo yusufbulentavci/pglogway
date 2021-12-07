@@ -33,7 +33,7 @@ public class FilterTest extends ScenarioTest {
 		FilterByProp filterCommmand=new FilterByProp("command_tag", "-hede,-idle");
 		confDir=new ConfDir(true, econ, "/tmp/filter", "mycluster", "5433", 5, new HourList(), new HourList(), 0, 0, 0,
 				null, null, null,
-				filterCommmand,null,null,null,null);
+				filterCommmand,null,null,null,null, false, "WARN");
 	}
 
 	@Test

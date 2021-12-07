@@ -2,8 +2,6 @@ package pglogway;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDate;
-import java.time.Year;
 import java.util.Calendar;
 import java.util.Map;
 
