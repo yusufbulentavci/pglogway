@@ -46,7 +46,7 @@ fi
 cp pglogway.ini pglogway-setup.ini
 cp pglogway.service pglogway-setup.service
 
-sed -i "s/PRM_PRM_JAVABIN/$javabin/" pglogway-setup.service
+sed -i "s/PRM_JAVABIN/$javabin/" pglogway-setup.service
 
 
 storemethod=''
@@ -57,7 +57,7 @@ storemethod=''
 echo "pglogway loglari kopyalanacak mi?/Yes,y,Y,No,n,N"
 while [[ $string != 'Yes' ]] && [[ $string != 'y' ]] && [[ $string != 'Y' ]]  && [[ $string != 'No' ]] && [[ $string != 'N' ]] && [[ $string != 'n' ]];
 do
-    read -p "Iceride pglogway loglari kopyalanacak mi?/Yes,y,Y,No,n,N " string # Ask the user to enter a string
+    read -p "Iceride pglogway loglari kopyalanacak mi?/Yes,y,Y,No,n,N :" string # Ask the user to enter a string
 done 
 
 echo "gectik"
@@ -67,7 +67,7 @@ pgloghostdir=''
 
 if [[ $string == 'Yes' ]] || [[ $string == 'y' ]] || [[ $string == 'Y' ]]; then
 	storemethod='ssh'
-	read -p "Loglarin kopyalanacagi host'un ip'sini giriniz.." pgloghost
+	read -p "Loglarin kopyalanacagi host'un ip'sini giriniz..: " pgloghost
 	
 	if [ ! -f /home/pglogway/.ssh/id_rsa.pub ]; then
 		su - pglogway -c "ssh-keygen -t rsa" || (echo 'failed to genegare keypair, exiting pglogway installation'; exit 1)
@@ -87,7 +87,7 @@ sed -i "s/PRM_STORE_METHOD/$storemethod/" pglogway-setup.ini
 string=''
 while [[ $string != 'Yes' ]] && [[ $string != 'y' ]] && [[ $string != 'Y' ]]  && [[ $string != 'No' ]] && [[ $string != 'N' ]] && [[ $string != 'n' ]];
 do
-    read -p "loglar elastic'e atilacakmi?/Yes,y,Y,No,n,N " string # Ask the user to enter a string
+    read -p "loglar elastic'e atilacakmi?/Yes,y,Y,No,n,N :" string # Ask the user to enter a string
 done 
 
 elastichost=''
@@ -95,10 +95,10 @@ elasticport=''
 elasticuser=''
 elasticpwd=''
 if [[ $string == 'Yes' ]] || [[ $string == 'y' ]] || [[ $string == 'Y' ]]; then
-	read -p "Elastic host'un ip'sini giriniz.." elastichost
-	read -p "Elastic sunucu'un portunu giriniz.." elasticport
-	read -p "Elastic kullanicisini giriniz.." elasticuser
-	read -p "Elastic kullanicisinin sifresini giriniz.." elasticpwd
+	read -p "Elastic host'un ip'sini giriniz..:" elastichost
+	read -p "Elastic sunucu'un portunu giriniz..:" elasticport
+	read -p "Elastic kullanicisini giriniz..:" elasticuser
+	read -p "Elastic kullanicisinin sifresini giriniz..:" elasticpwd
 	
 	sed -i 's/PRM_TO_ELASTIC/true/' pglogway-setup.ini
 	
@@ -128,7 +128,7 @@ echo "Log directory entry"
 cluster=''
 logdir=''
 port=""
-ind=0
+ind=1
 
 if [[ $string == 'Yes' ]] || [[ $string == 'y' ]] || [[ $string == 'Y' ]]; then
 	read -p "Enter cluster:" cluster

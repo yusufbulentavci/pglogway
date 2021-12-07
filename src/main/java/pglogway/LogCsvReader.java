@@ -29,6 +29,7 @@ public class LogCsvReader {
 
 	private int targetCsvInd;
 	private String status;
+	private boolean err = false;
 
 	public LogCsvReader(File csvFile, LogTailListener tailer) {
 		this.csvFile = csvFile;
@@ -48,31 +49,41 @@ public class LogCsvReader {
 					continue;
 				}
 				status = "run";
-				long len = csvFile.length();
 
-				if (len < _filePointer) {
-					// Log must have been jibbled or deleted.
-					this.tailer.fileErrorModified(this);
-					_filePointer = len;
-				} else if (len > _filePointer) {
-					// File must have had something added to it!
-					try (RandomAccessFile raf = new RandomAccessFile(csvFile, "r");) {
-						raf.seek(_filePointer);
+				if (!err) {
+					try {
 
-						InputStream is = Channels.newInputStream(raf.getChannel());
-						CSVReader reader = new CSVReader(new InputStreamReader(is));
+						long len = csvFile.length();
 
-						String[] dd = readCsvLine(raf, reader);
-						while (dd != null) {
-							if (csvInd >= targetCsvInd) {
-								this.tailer.appendCsv(this, dd);
-								this.targetCsvInd = csvInd;
+						if (len < _filePointer) {
+							// Log must have been jibbled or deleted.
+							this.tailer.fileErrorModified(this);
+							_filePointer = len;
+						} else if (len > _filePointer) {
+							// File must have had something added to it!
+							try (RandomAccessFile raf = new RandomAccessFile(csvFile, "r");) {
+								raf.seek(_filePointer);
+
+								InputStream is = Channels.newInputStream(raf.getChannel());
+								CSVReader reader = new CSVReader(new InputStreamReader(is));
+
+								String[] dd = readCsvLine(raf, reader);
+								while (dd != null) {
+									if (csvInd >= targetCsvInd) {
+										this.tailer.appendCsv(this, dd);
+										this.targetCsvInd = csvInd;
+									}
+									dd = readCsvLine(raf, reader);
+								}
+
 							}
-							dd = readCsvLine(raf, reader);
 						}
-
+					} catch (Exception e) {
+						err=true;
+						logger.error("Failed reading file, ignoring file:" + csvFile.getPath(), e);
 					}
 				}
+
 				this.tailer.beforeSleeping(this);
 			}
 		} catch (Exception e) {
@@ -96,7 +107,7 @@ public class LogCsvReader {
 					raf.seek(_filePointer);
 				} catch (IOException e1) {
 					logger.error("readCsvLine", e1);
-					Main.fatal();
+					// Main.fatal();
 				}
 			}
 		}
@@ -118,7 +129,7 @@ public class LogCsvReader {
 	public void report(StringBuilder sb) {
 		sb.append(" CsvReader [ind:" + csvInd);
 		sb.append(" targetInd:" + targetCsvInd);
-		sb.append(" status:" + status+"]");
+		sb.append(" status:" + status + "]");
 	}
 
 }

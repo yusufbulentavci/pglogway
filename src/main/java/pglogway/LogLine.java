@@ -255,7 +255,7 @@ public class LogLine {
 		try {
 			return Integer.parseInt(string);
 		} catch (Exception e) {
-			System.err.println(string);
+//			System.err.println(string);
 //			return null;
 			throw new RuntimeException(string);
 		}
