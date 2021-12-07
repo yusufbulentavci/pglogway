@@ -33,7 +33,7 @@ public class RolloverTest extends ScenarioTest {
 		ElasticCon econ=new ElasticCon("localhost", "9200", "euser", "epwd");
 		confDir=new ConfDir(true, econ, "/tmp/rollover", "mycluster", "5433", 5, new HourList(), new HourList(), 0, 0, 0,
 				null, null, null,
-				null,null,null,null,null);
+				null,null,null,null,null, false, "WARN");
 	}
 
 

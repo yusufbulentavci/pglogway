@@ -21,7 +21,7 @@ public class MaintainGzipStore extends ScenarioTest {
 		ElasticCon econ = new ElasticCon("localhost", "9200", "euser", "epwd");
 		confDir = new ConfDir(true, econ, "/tmp/maintain_gzip_store", "mycluster", "5433", 5, new HourList(), new HourList(),
 				0, 0, 0, null, null, null,
-				null,null,null,null,null);
+				null,null,null,null,null, false, "WARN");
 	}
 
 	@Test

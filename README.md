@@ -88,4 +88,8 @@ linux kullanicisi artik pglogway
 2.5.1
 hata olustugunda uygulama log yazarak kendisini kapatiyor
 telnet'e version komutu eklendi
+2.5.4
+csv dosyasinda hata olusursa, o csv dosyasi ignore edilerek calismaya devam ediliyor
+2.6.0
+alarm
 
