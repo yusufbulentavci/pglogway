@@ -12,12 +12,15 @@ public class Alarm {
 // INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC.
 	private String alarmLevelStr;
 	private int alarmLevel;
-	private File file = new File("/var/log/pglogway/alarm");
+	private File file = new File("/tmp/pglogway.alarm");
 
 	public Alarm(String alarmLevel) {
 		this.alarmLevelStr = alarmLevel;
 		this.alarmLevel = severity(alarmLevel);
 		logger.info("Alarm is on; and level is "+alarmLevelStr);
+		if(file.exists()) {
+			file.delete();
+		}
 	}
 
 	public void check(LogLine ll) {
