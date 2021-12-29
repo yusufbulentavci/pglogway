@@ -6,12 +6,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
+import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvValidationException;
 
 import net.nbug.hexprobe.server.telnet.EasyTerminal;
 
@@ -30,6 +29,8 @@ public class LogCsvReader {
 	private int targetCsvInd;
 	private String status;
 	private boolean err = false;
+
+	private long startRafTry;
 
 	public LogCsvReader(File csvFile, LogTailListener tailer) {
 		this.csvFile = csvFile;
@@ -61,26 +62,34 @@ public class LogCsvReader {
 							_filePointer = len;
 						} else if (len > _filePointer) {
 							// File must have had something added to it!
-							try (RandomAccessFile raf = new RandomAccessFile(csvFile, "r");) {
-								raf.seek(_filePointer);
+							try  {
+								rafCreate();
 
-								InputStream is = Channels.newInputStream(raf.getChannel());
-								CSVReader reader = new CSVReader(new InputStreamReader(is));
-
-								String[] dd = readCsvLine(raf, reader);
+								String[] dd = readCsvLine();
 								while (dd != null) {
 									if (csvInd >= targetCsvInd) {
 										this.tailer.appendCsv(this, dd);
 										this.targetCsvInd = csvInd;
 									}
-									dd = readCsvLine(raf, reader);
+									// Sona cok yaklasma
+									if (len - _filePointer < 1000) {
+										len = csvFile.length();
+										if (len - _filePointer < 1000) {
+											Thread.sleep(1000);
+										}
+									}
+									dd = readCsvLine();
+
 								}
 
+							}finally {
+								closeReader();
 							}
 						}
 					} catch (Exception e) {
-						err=true;
-						logger.error("Failed reading file, ignoring file:" + csvFile.getPath(), e);
+						err = true;
+						logger.error("Failed reading file, ignoring file:" + csvFile.getPath() + " CsvInd:" + csvInd,
+								e);
 					}
 				}
 
@@ -93,26 +102,105 @@ public class LogCsvReader {
 		// dispose();
 	}
 
-	protected String[] readCsvLine(RandomAccessFile raf, CSVReader reader) {
+	InputStreamReader is = null;
+	RandomAccessFile raf = null;
 
-		String[] ret = null;
-		for (int i = 0; i < 1000 && keepRunning; i++) {
+	private void updateReader() throws IOException {
+		closeReader();
+		this.raf = new RandomAccessFile(csvFile, "r");
+		raf.seek(_filePointer);
+		is = new InputStreamReader(Channels.newInputStream(raf.getChannel()));
+	}
+
+	private void closeReader() {
+		
+		if (is != null) {
 			try {
-				ret = reader.readNext();
-				csvInd++;
-				_filePointer = raf.getFilePointer();
+				is.close();
+			} catch (Exception e) {
+			}
+		}
+		if(raf!=null) {
+			try {
+				raf.close();
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	protected String[] readCsvLine() {
+
+		boolean err = false;
+		String[] ret = null;
+		int i;
+		for (i = 0; i < 1000 && keepRunning; i++) {
+			try {
+				rafStorePos();
+				ret = LogParser.parse(is);
+
+				rafStartTry();
+//				if (ret != null && ret.length != 23) {
+//					logger.error("Unexpected csv in csv file:" + csvFile.getPath() + " at csvInd:" + csvInd
+//							+ " csv.len:" + ret.length + "csv:" + Arrays.toString(ret));
+//					try {
+//						Thread.sleep(500);
+//					} catch (InterruptedException e) {
+//					}
+//					rafFailed();
+//					err = true;
+//					continue;
+//				}
+				rafSuccess();
+
+				if (err && ret != null) {
+					logger.info("Csv error resolved: ret=" + Arrays.toString(ret));
+				}
+//				System.err.println(ret.length);
 				return ret;
-			} catch (CsvValidationException | IOException e) {
+			} catch (IOException e) {
 				try {
-					raf.seek(_filePointer);
+					logger.error("Unexpected csv exception in csv file:" + csvFile.getPath() + " at csvInd:" + csvInd
+							+ " csv.len:", e);
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException eR) {
+					}
+					err = true;
+					rafFailed();
 				} catch (IOException e1) {
 					logger.error("readCsvLine", e1);
 					// Main.fatal();
 				}
 			}
 		}
+		if (i > 999) {
+			throw new RuntimeException("Failed many times");
+		}
+
 		return ret;
 
+	}
+
+	private void rafStorePos() throws IOException {
+		this._filePointer = raf.getFilePointer();
+	}
+
+	private void rafStartTry() throws IOException {
+		this.startRafTry = raf.getFilePointer();
+	}
+
+	private void rafSuccess() throws IOException {
+		this._filePointer = this.startRafTry;
+		csvInd++;
+	}
+
+	private void rafCreate() throws IOException {
+		updateReader();
+	}
+
+	private void rafFailed() throws IOException {
+		this.startRafTry = -1;
+		updateReader();
 	}
 
 	public void terminate() {
