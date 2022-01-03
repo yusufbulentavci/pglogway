@@ -43,10 +43,11 @@ fi
 #usermod -a -G pglogway pglogway
 
 
-cp pglogway.ini pglogway-setup.ini
-cp pglogway.service pglogway-setup.service
+cp -f pglogway.ini pglogway-setup.ini
+cp -f pglogway.service pglogway-setup.service
 
-sed -i "s/PRM_JAVABIN/$javabin/" pglogway-setup.service
+echo "JavaBin:$javabin"
+sed -i "s|PRM_JAVABIN|$javabin|" pglogway-setup.service
 
 
 storemethod=''
@@ -62,8 +63,8 @@ done
 
 echo "gectik"
 
-pgloghost=''
-pgloghostdir=''
+export pgloghost=''
+export pgloghostdir=''
 
 if [[ $string == 'Yes' ]] || [[ $string == 'y' ]] || [[ $string == 'Y' ]]; then
 	storemethod='ssh'
@@ -76,8 +77,11 @@ if [[ $string == 'Yes' ]] || [[ $string == 'y' ]] || [[ $string == 'Y' ]]; then
 	su - pglogway -c "ssh-copy-id $pgloghost" || (echo 'ssh key couldnt be copied. Pglogway installation failed, exiting'; exit 1)
 	
 	read -p "Loglarin kopyalanacagi hosttaki log ust dizinini giriniz:" pgloghostdir
-	sed -i 's/PRM_STORE_HOST/$pgloghost/' pglogway-setup.ini
-	sed -i 's/PRM_STORE_PATH/$pgloghostdir/' pglogway-setup.ini
+
+	echo "Log dosyalarinin kopyalanacagi yer> $pgloghost:$pgloghostdir"
+
+	sed -i "s|PRM_STORE_HOST|$pgloghost|" pglogway-setup.ini
+	sed -i "s|PRM_STORE_PATH|$pgloghostdir|" pglogway-setup.ini
 else
 	storemethod='remove'	
 fi
@@ -174,8 +178,8 @@ fi
 mkdir -p /usr/local/share/pglogway
 echo "/usr/local/share/pglogway directory created"
 
-cp pglogway-jar-with-dependencies.jar /usr/local/share/pglogway
-cp uninstall.sh /usr/local/share/pglogway
+cp -f pglogway-jar-with-dependencies.jar /usr/local/share/pglogway
+cp -f uninstall.sh /usr/local/share/pglogway
 chown -R pglogway:pglogway /usr/local/share/pglogway
 
 if [ ! -d "/var/log/pglogway" ]; then
@@ -183,7 +187,7 @@ if [ ! -d "/var/log/pglogway" ]; then
 	chown pglogway:pglogway /var/log/pglogway
 fi
 
-cp pglogway-setup.service /lib/systemd/system/pglogway.service
+cp -f pglogway-setup.service /lib/systemd/system/pglogway.service
 
 systemctl daemon-reload
 echo "Installation completed"
@@ -204,6 +208,3 @@ log_statement = 'all'
 log_error_verbosity = 'verbose' 
 log_file_mode = 0640
 EOF
-
-
-
