@@ -14,7 +14,6 @@ import org.apache.logging.log4j.core.config.Configurator;
 import net.nbug.hexprobe.server.telnet.EasyTerminal;
 
 /**
- * Hello world!
  *
  */
 public class Main {

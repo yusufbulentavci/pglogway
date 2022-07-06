@@ -175,6 +175,15 @@ public class LogDir implements Runnable {
 	public void status(EasyTerminal terminal) throws IOException {
 		terminal.writeLine("LogDir:" + this.confDir);
 		terminal.writeLine(status);
+		if(confDir.isDontCopy()) {
+			terminal.writeLine("Store method is remove or empty. Do not store files");
+		}else {
+			terminal.writeLine("Store method:"+confDir.getStoreMethod());
+		}
+		
+		terminal.writeLine("NoCopy hours:"+confDir.getNoCopy().toString());
+		terminal.writeLine("NoZip hours:"+confDir.getNoZip().toString());
+		
 		if (logFile != null) {
 			logFile.status(terminal);
 		}

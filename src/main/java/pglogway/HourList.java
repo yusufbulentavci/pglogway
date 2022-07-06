@@ -40,6 +40,12 @@ public class HourList {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "HourList [hours=" + hours + ", toParse=" + toParse + "]";
+	}
+
+
 	private void addHour(String s) throws Exception {
 		int i;
 		try {
