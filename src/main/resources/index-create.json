@@ -1,0 +1,161 @@
+{
+	"settings": {
+		"number_of_shards": 1
+	},
+	"mappings": {
+		"properties": {
+			"@timestamp": {
+				"type": "date",
+				"format": "strict_date_optional_time||epoch_second"
+			},
+			"session_id": {
+				"type": "text"
+			},
+			"session_line_num": {
+				"type": "long"
+			},
+			"command_tag": {
+				"type": "keyword"
+			},
+			"session_start_time": {
+				"type": "date",
+				"format": "strict_date_optional_time||epoch_second"
+			},
+			"virtual_transaction_id": {
+				"type": "long"
+			},
+			"transaction_id": {
+				"type": "long"
+			},
+			"sql_state_code": {
+				"type": "text"
+			},
+			"detail": {
+				"type": "text"
+			},
+			"hint": {
+				"type": "text"
+			},
+			"internal_query": {
+				"type": "text"
+			},
+			"internal_query_pos": {
+				"type": "long"
+			},
+			"context": {
+				"type": "text"
+			},
+			"query": {
+				"type": "text"
+			},
+			"query_pos": {
+				"type": "long"
+			},
+			"location": {
+				"type": "text"
+			},
+			"application_name": {
+				"type": "text"
+			},
+			"duration": {
+				"type": "double"
+			},
+			"parse_duration": {
+				"type": "double"
+			},
+			"bind_duration": {
+				"type": "double"
+			},
+			"parameters": {
+				"type": "text"
+			},
+			"unix_socket": {
+				"type": "boolean"
+			},
+			"csv": {
+				"type": "text"
+			},
+			"csv_ind": {
+				"type": "long"
+			},
+			"host":{
+				"properties":{
+					"name":{
+						"type":"text"
+					}
+				}
+			},
+			"process": {
+				"properties": {
+					"pid": {
+						"type": "long"
+					}
+				}
+			},
+			"client": {
+				"properties": {
+					"ip": {
+						"type": "ip"
+					},
+					"port": {
+						"type": "long"
+					}
+				}
+			},
+			"postgresql": {
+				"properties": {
+					"log": {
+						"properties": {
+							"core_id": {
+								"type": "long"
+							},
+							"database": {
+								"type": "keyword"
+							},
+							"error": {
+								"properties": {
+									"code": {
+										"type": "long"
+									}
+								}
+							},
+							"level": {
+								"type": "keyword"
+							},
+							"message": {
+								"type": "keyword"
+							},
+							"query": {
+								"type": "keyword"
+							},
+							"query_name": {
+								"type": "keyword"
+							},
+							"query_step": {
+								"type": "keyword"
+							},
+							"timestamp": {
+								"type": "keyword"
+							},
+							"timezone": {
+								"type": "keyword"
+							},
+							"user": {
+								"type": "keyword"
+							},
+							"port": {
+								"type": "integer"
+							},
+							"locker": {
+								"type": "integer"
+							},
+							"locked": {
+								"type": "integer"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

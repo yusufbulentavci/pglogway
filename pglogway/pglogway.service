@@ -1,0 +1,14 @@
+[Unit]
+Description=Pg Log Way
+
+[Service]
+WorkingDirectory=/tmp
+ExecStart=PRM_JAVABIN -Dlog4j.configurationFile=/etc/pglogway-log4j2.properties -cp /usr/local/share/pglogway/pglogway-jar-with-dependencies.jar pglogway.Main
+User=pglogway
+Type=simple
+Restart=on-failure
+RestartSec=600
+
+
+[Install]
+WantedBy=multi-user.target
