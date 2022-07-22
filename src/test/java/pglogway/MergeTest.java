@@ -50,6 +50,8 @@ public class MergeTest extends ScenarioTest {
 				.readAllLines(new File("/tmp/merge/postgresql-2021-02-08_10_31_38.csv.json").toPath());
 		List<String> revised = Files
 				.readAllLines(new File("/tmp/merge/expection/postgresql-2021-02-08_10_31_38.csv.json").toPath());
+		
+		revised=fixList(revised);
 
 //		//compute the patch: this is the diffutils part
 		Patch<String> patch = DiffUtils.diff(original, revised);

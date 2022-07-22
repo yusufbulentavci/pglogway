@@ -9,6 +9,11 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+//2022-07-21 09:47:27.096 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,3,"idle",2022-07-21 09:42:17 +03,42/1723265,0,LOG,00000,"statement: create table sinadene( int a);",,,,,,,,"exec_simple_query, postgres.c:1045","psql"
+//2022-07-21 09:47:27.106 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,4,"CREATE TABLE",2022-07-21 09:42:17 +03,42/1723265,0,ERROR,42704,"type ""a"" does not exist",,,,,,"create table sinadene( int a);",28,"typenameType, parse_type.c:275","psql"
+//2022-07-21 09:47:33.381 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,5,"idle",2022-07-21 09:42:17 +03,42/1723266,0,LOG,00000,"statement: create table sinadene( a int);",,,,,,,,"exec_simple_query, postgres.c:1045","psql"
+//2022-07-21 09:47:49.950 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,7,"idle",2022-07-21 09:42:17 +03,42/1723267,0,LOG,00000,"statement: alter table sinadene add column b int;",,,,,,,,"exec_simple_query, postgres.c:1045","psql"
+//2022-07-21 09:00:22.344 +03,"bs_rw","bs",1107680,"10.150.151.154:60936",62d8ea15.10e6e0,3871,"INSERT",2022-07-21 08:54:29 +03,22/8027705,22309712,LOG,00000,"execute S_1: INSERT INTO logging_event_property (event_id, mapped_key, mapped_value) VALUES ($1, $2, $3)","parameters: $1 = '142520', $2 = 'spring.datasource.password', $3 = '376Rs4xg'",,,,,,,"exec_execute_message, postgres.c:2065","PostgreSQL JDBC Driver"
 public class LogLine {
 	static final Logger logger = LogManager.getLogger(LogLine.class.getName());
 
@@ -19,12 +24,12 @@ public class LogLine {
 	String connection_from;
 	String session_id;
 	Long session_line_num;
-	String command_tag;
+	String command_tag; // BEGIN, SET, COMMIT, PARSE, DISCARD ALL, SELECT, UPDATE, INSERT, idle
 	Long session_start_time;
-	String virtual_transaction_id;
+	Long virtual_transaction_id;
 	Long transaction_id;
-	String error_severity;
-	String sql_state_code;
+	String error_severity; // DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, FATAL, PANIC, ???
+	String sql_state_code; //
 	String message;
 	String detail;
 	String hint;
@@ -54,6 +59,8 @@ public class LogLine {
 	private DateTimeFormatter formatter;
 
 	private final Integer pgPort;
+
+	private Long tempUsage = null;
 
 	public LogLine(DateTimeFormatter formatter, Integer csvInd, String error_severity, String command_tag,
 			String message, Integer pgPort) {
@@ -110,7 +117,7 @@ public class LogLine {
 		session_line_num = parseLong(record[6]);
 		command_tag = nul(record[7]);
 		session_start_time = parseTime(record[8]);
-		virtual_transaction_id = nul(record[9]);
+		virtual_transaction_id = parseVirtualTid(nul(record[9]));
 		transaction_id = parseLong(record[10]);
 		error_severity = nul(record[11]);
 		sql_state_code = nul(record[12]);
@@ -129,21 +136,49 @@ public class LogLine {
 			if (message.startsWith("duration:")) {
 				this.duration = parseDuration(message);
 			}
-			if(command_tag==null) {
+
+			if (command_tag == null) {
 				// parse checkpoint
 				// postgresql.log.message
-				//message// checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.109 s, sync=0.001 s, total=0.118 s; sync files=1, longest=0.001 s, average=0.001 s; distance=3 kB, estimate=40 kB
+				// message// checkpoint complete: wrote 1 buffers (0.0%); 0 WAL file(s) added, 0
+				// removed, 0 recycled; write=0.109 s, sync=0.001 s, total=0.118 s; sync
+				// files=1, longest=0.001 s, average=0.001 s; distance=3 kB, estimate=40 kB
 			}
 //			message.indexOf(" )
 			// System.out.println(message+"===>"+duration);
+
+			if (query == null && this.message != null) {
+				if (this.message.startsWith("statement") || this.message.startsWith("execute")) {
+					int ind = this.message.indexOf(":");
+					if (ind > 0) {
+						this.query = this.message.substring(ind + 1).trim();
+						this.message = this.message.replace(this.query, "--query--");
+					}
+				}
+			}
 		}
 		if (detail != null) {
-			if(detail.startsWith("parameters:")) {
-				bindDetail = detail;
-			}else if (detail.startsWith("Process holding the lock:")) {
+			if (detail.startsWith("Process holding the lock:")) {
 				resolveDetailLock();
 			}
 		}
+	}
+
+	private Long parseVirtualTid(String n) {
+		if (n == null)
+			return null;
+		int ind = n.indexOf('/');
+		if (ind < 0)
+			return null;
+		n = n.substring(ind + 1);
+		try {
+			Long l = Long.parseLong(n);
+			return l;
+		} catch (Exception e) {
+			logger.error("Can not parse long: n", e);
+			return null;
+		}
+
 	}
 
 	private void resolveDetailLock() {
@@ -156,15 +191,15 @@ public class LogLine {
 			String phl = d1.substring(0, dot);
 //			System.out.println(phl);
 			this.locker = Integer.parseInt(phl.trim());
-			System.out.println(locker);
+//			System.out.println(locker);
 			String wq = d1.substring(dot + 1).trim();
 			String rest = wq.substring("Wait queue:".length());
-			rest=rest.replace('.', ' ');
+			rest = rest.replace('.', ' ');
 			this.locked = new JSONArray();
 			String[] ws = rest.split(",");
 			for (String string : ws) {
-				string=string.trim();
-				if(string.length()==0 || string.equals("."))
+				string = string.trim();
+				if (string.length() == 0 || string.equals("."))
 					continue;
 				locked.put(Integer.parseInt(string.trim()));
 			}
@@ -285,18 +320,18 @@ public class LogLine {
 		if (this.pgPort != null) {
 			ret.put("postresql.log.port", this.pgPort);
 		}
-		if(this.locker != null) {
+		if (this.locker != null) {
 			ret.put("postresql.log.locker", locker);
 		}
-		if(this.locked != null) {
+		if (this.locked != null) {
 			ret.put("postresql.log.locked", locked);
 		}
 		if (this.process_id != null)
 			ret.put("process.pid", this.process_id);
-		
+
 		if (this.unix_socket != null) {
 			ret.put("unix_socket", unix_socket);
-		}else {
+		} else {
 			if (this.connection_from != null) {
 				ret.put("client.ip", this.connection_from);
 				ret.put("client.port", this.connection_from_port);
@@ -313,6 +348,8 @@ public class LogLine {
 			ret.put("session_start_time", this.session_start_time);
 		if (this.transaction_id != null)
 			ret.put("transaction_id", this.transaction_id);
+		if (this.virtual_transaction_id != null)
+			ret.put("vt_id", this.virtual_transaction_id);
 		if (this.error_severity != null)
 			ret.put("postgresql.log.level", this.error_severity);
 		if (this.sql_state_code != null)
@@ -355,9 +392,10 @@ public class LogLine {
 		if (this.virtual_session_id != null) {
 			ret.put("virtual_session_id", virtual_session_id);
 		}
-		
-		
-		
+
+		if (this.tempUsage != null) {
+			ret.put("temp_file_size", tempUsage / (1024 * 1024));
+		}
 
 		if (csvInd != null)
 			ret.put("csv_ind", csvInd);
@@ -367,7 +405,7 @@ public class LogLine {
 		return ret;
 	}
 
-	public void updateDur(BigDecimal bind, BigDecimal parse, String message, String bindDetail) {
+	public void update(BigDecimal bind, BigDecimal parse, BigDecimal duration, String bindDetail) {
 		this.bindDur = bind;
 		this.parseDur = parse;
 		if (duration == null) {
@@ -379,9 +417,8 @@ public class LogLine {
 		if (parseDur != null)
 			duration.add(parseDur);
 
-//		duration = durInSec(duration);
+		duration = durInSec(duration);
 
-		this.message = message;
 		this.bindDetail = bindDetail;
 	}
 
@@ -437,6 +474,14 @@ public class LogLine {
 
 	public String getBindDetail() {
 		return bindDetail;
+	}
+
+	public void setTempUsage(long tempUsage2) {
+		this.tempUsage = tempUsage2;
+	}
+
+	public String getQuery() {
+		return query;
 	}
 
 }

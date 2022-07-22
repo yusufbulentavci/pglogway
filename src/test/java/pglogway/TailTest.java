@@ -79,6 +79,8 @@ public class TailTest extends ScenarioTest {
 				.readAllLines(new File("/tmp/tail/postgresql-2021-02-08_10_31_38.csv.json").toPath());
 		List<String> revised = Files
 				.readAllLines(new File("/tmp/tail/expection/postgresql-2021-02-08_10_31_38.csv.json").toPath());
+		
+		revised=fixList(revised);
 //
 //		//compute the patch: this is the diffutils part
 		Patch<String> patch = DiffUtils.diff(original, revised);

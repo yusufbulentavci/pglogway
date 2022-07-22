@@ -1,0 +1,1 @@
+{"csv_ind":2,"command_tag":"SET", "postgresql.log.message":"execute <unnamed>: --query--","bind_duration":7.0E-6,"parse_duration":2.3E-5,"parameters":"params","query":"SET extra_float_digits = 3"}

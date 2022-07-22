@@ -75,11 +75,14 @@ public class RolloverTest extends ScenarioTest {
 				.readAllLines(new File("/tmp/rollover/postgresql-2021-02-08_10_31_38.csv.json").toPath());
 		List<String> revised = Files
 				.readAllLines(new File("/tmp/rollover/expection/postgresql-2021-02-08_10_31_38.csv.json").toPath());
+		revised=fixList(revised);
+
 		List<String> original1 = Files
 				.readAllLines(new File("/tmp/rollover/postgresql-2021-02-08_10_32_00.csv.json").toPath());
 		List<String> revised1 = Files
 				.readAllLines(new File("/tmp/rollover/expection/postgresql-2021-02-08_10_32_00.csv.json").toPath());
-//
+		revised1=fixList(revised1);
+		
 //		//compute the patch: this is the diffutils part
 		Patch<String> patch = DiffUtils.diff(original, revised);
 		if (patch.getDeltas().size() > 0) {

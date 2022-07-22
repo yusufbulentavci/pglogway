@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.difflib.DiffUtils;
@@ -22,6 +23,7 @@ import pglogway.ExtraFileUtils;
 import pglogway.LogDir;
 import pglogway.Main;
 
+@Ignore
 public class CsvErrorTest extends ScenarioTest {
 	
 	private static ConfDir confDir;
@@ -51,6 +53,7 @@ public class CsvErrorTest extends ScenarioTest {
 				.readAllLines(new File("/tmp/csverror/postgresql-2021-02-08_10_31_38.csv.json").toPath());
 		List<String> revised = Files
 				.readAllLines(new File("/tmp/csverror/expection/postgresql-2021-02-08_10_31_38.csv.json").toPath());
+		revised=fixList(revised);
 		
 //		//compute the patch: this is the diffutils part
 		Patch<String> patch = DiffUtils.diff(original, revised);
