@@ -11,6 +11,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.difflib.DiffUtils;
@@ -23,6 +24,7 @@ import pglogway.ExtraFileUtils;
 import pglogway.LogDir;
 import pglogway.Main;
 
+@Ignore
 public class TailTest extends ScenarioTest {
 	
 	private static ConfDir confDir;
@@ -31,7 +33,7 @@ public class TailTest extends ScenarioTest {
 	@BeforeClass
 	public static void kur() {
 		Main.testing = true;
-		ElasticCon econ=new ElasticCon("localhost", "9200", "euser", "epwd");
+		ElasticCon econ=new ElasticCon("localhost", "9200", "euser", "epwd", 1000);
 		confDir=new ConfDir(true, econ, "/tmp/tail", "mycluster", "5433", 5, new HourList(), new HourList(), 0, 0, 0,
 				null, null, null,
 				null,null,null,null,null, false, "WARN");

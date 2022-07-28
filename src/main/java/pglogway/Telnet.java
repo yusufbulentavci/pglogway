@@ -18,6 +18,14 @@ public class Telnet {
 			}
 		});
 		
+		srv.registerCommand("counters", new Command() {
+			@Override
+			public void execute(String name, String argument, EasyTerminal terminal) throws IOException {
+				Counters.one().status(terminal);
+				terminal.flush();
+			}
+		});
+		
 		srv.registerCommand("version", new Command() {
 			@Override
 			public void execute(String name, String argument, EasyTerminal terminal) throws IOException {

@@ -62,6 +62,8 @@ public class LogLine {
 
 	private Long tempUsage = null;
 
+	private boolean isStatement=false;
+
 	public LogLine(DateTimeFormatter formatter, Integer csvInd, String error_severity, String command_tag,
 			String message, Integer pgPort) {
 		this.formatter = formatter;
@@ -153,6 +155,7 @@ public class LogLine {
 					if (ind > 0) {
 						this.query = this.message.substring(ind + 1).trim();
 						this.message = this.message.replace(this.query, "--query--");
+						this.isStatement=true;
 					}
 				}
 			}
@@ -173,6 +176,8 @@ public class LogLine {
 		n = n.substring(ind + 1);
 		try {
 			Long l = Long.parseLong(n);
+			if(l == 0)
+				return null;
 			return l;
 		} catch (Exception e) {
 			logger.error("Can not parse long: n", e);
@@ -476,12 +481,19 @@ public class LogLine {
 		return bindDetail;
 	}
 
-	public void setTempUsage(long tempUsage2) {
-		this.tempUsage = tempUsage2;
+	public void increaseTempUsage(long tempUsage2) {
+		if(this.tempUsage == null) {
+			this.tempUsage = 0l;
+		}
+		this.tempUsage += tempUsage2;
 	}
 
 	public String getQuery() {
 		return query;
+	}
+
+	public boolean isStatement() {
+		return isStatement;
 	}
 
 }

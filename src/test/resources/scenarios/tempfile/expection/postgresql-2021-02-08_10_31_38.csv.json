@@ -1,0 +1,1 @@
+{"csv_ind":0,"temp_file_size":101,"postgresql.log.message":"statement: --query--","query":"select * from tdbs.gerceklesme where tarih > (now() - '1 year 4 months'::interval) order by olusturma_tarihi;"}

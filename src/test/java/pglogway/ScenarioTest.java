@@ -38,7 +38,6 @@ public class ScenarioTest {
 		
 		compareJsonLines(original, revised, sb);
 		if(!sb.toString().isBlank()) {
-			System.out.println(sb.toString());
 			assertFalse(true);
 		}
 		
@@ -55,7 +54,6 @@ public class ScenarioTest {
 			Integer csvLine = k.getKey();
 			JSONObject jo=orig.get(csvLine);
 			if(jo == null) {
-//				System.out.println(it);
 				sb.append("CsvLine:").append(csvLine).append(" Expected csv_line not found:"+csvLine).append("\n");
 				continue;
 			}
@@ -65,7 +63,6 @@ public class ScenarioTest {
 		for (Entry<Integer, JSONObject> k : orig.entrySet()) {
 			Integer csvLine = k.getKey();
 			if(!exp.containsKey(csvLine)) {
-//				System.out.println(it);
 				sb.append("CsvLine:").append(csvLine).append(" Unexpected csv_line found:"+csvLine).append("\n");
 				continue;
 			}
@@ -89,6 +86,8 @@ public class ScenarioTest {
 	Map<Integer, JSONObject> toMap(List<String> original) {
 		Map<Integer, JSONObject> orig=new HashMap<Integer, JSONObject>();
 		for (String string : original) {
+			if(string.trim().length() == 0)
+				continue;
 			JSONObject jo=new JSONObject(string);
 			Integer ind=jo.getInt("csv_ind");
 			orig.put(ind, jo);

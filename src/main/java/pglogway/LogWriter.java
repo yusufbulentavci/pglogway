@@ -3,6 +3,7 @@ package pglogway;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,7 +33,6 @@ public class LogWriter {
 	private final int hour;
 
 	private final ConfDir confDir;
-
 
 	public LogWriter(File dir, String jsonFileName, String csvFileName, ConfDir confDir) {
 		this.jsonFileName = jsonFileName;
@@ -64,10 +64,10 @@ public class LogWriter {
 			} else {
 				this.elasticPush = null;
 			}
-			
-			if(confDir.getAlarm()) {
-				this.alarm=new Alarm(confDir.getAlarmLevel());
-			}else {
+
+			if (confDir.getAlarm()) {
+				this.alarm = new Alarm(confDir.getAlarmLevel());
+			} else {
 				this.alarm = null;
 			}
 
@@ -126,16 +126,28 @@ public class LogWriter {
 //		}
 //	}
 
-	public void write(LogLine ll) {
+	public void write(LogLine ll, boolean canBeFiltered, AtomicInteger sentLogCount) {
 //		logger.info(ll.toJson(fn).toString());
-		if(this.alarm!=null) {
+		if (this.alarm != null) {
 			this.alarm.check(ll);
 		}
-		if (filtered(ll))
+		if (canBeFiltered && filtered(ll)) {
+			Counters.one().filteredLogCount.incrementAndGet();
 			return;
+		}
 		if (!Main.testing) {
-			if (this.elasticPush != null)
+			if (this.elasticPush != null) {
+				if (sentLogCount != null) {
+					int val=sentLogCount.get();
+					if(val < confDir.getEcon().getSentLimit()) {
+						Counters.one().limitElasticPushCount.incrementAndGet();
+						return;
+					}
+					sentLogCount.incrementAndGet();
+				}
 				this.elasticPush.push(ll.toJson(csvFileName).toMap());
+				Counters.one().elasticSent.incrementAndGet();
+			}
 		}
 
 		if (Main.testing) {

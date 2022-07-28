@@ -3,6 +3,7 @@ package pglogway;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +18,8 @@ public class PgConnection {
 
 	List<LogLine> unknown = new ArrayList<>();
 
+	Long vTransactionId = null;
+
 	LogWriter logWriter;
 	String sessionId;
 	int virtualSessionId = 0;
@@ -25,7 +28,7 @@ public class PgConnection {
 	BigDecimal parseDur;
 	BigDecimal bindDur;
 	String query;
-	private long tempUsage = 0;
+//	private long tempUsage = 0;
 	private List<LogLine> bastirilan = new ArrayList<>();
 //	bind;
 //	private LogLine parse;
@@ -33,14 +36,26 @@ public class PgConnection {
 ////	private int pbccPattern = 0;
 	private String bindDetail;
 
-	private String virtualTransactionId = null;
+	private Long virtualTransactionId = null;
 
 	private boolean waitDuration = false;
 
 	private LogLine statement;
 
+	AtomicInteger sentLogCount = new AtomicInteger();
+
 	public void process(LogLine ll) {
 		ll.virtual_session_id = this.virtualSessionId;
+
+		if (ll.virtual_transaction_id != null) {
+			if (this.virtualTransactionId == null) {
+				this.virtualTransactionId = ll.virtual_transaction_id;
+			} else if (!ll.virtual_transaction_id.equals(this.virtualTransactionId)) {
+				resetPbcc(false);
+				this.virtualTransactionId = ll.virtual_transaction_id;
+			}
+		}
+
 		if (ll.error_severity.equals("LOG") && ll.command_tag != null) {
 
 			if (ll.command_tag.equals("DISCARD ALL")) {
@@ -57,7 +72,7 @@ public class PgConnection {
 			} else if (ll.command_tag.equals("BIND")) {
 //				this.bind = ll;
 				if (ll.detail.startsWith("parameters:")) {
-					bindDetail = ll.detail.substring("parameters:".length()+1);
+					bindDetail = ll.detail.substring("parameters:".length() + 1);
 				}
 				this.bindDur = ll.getDuration();
 				this.bastirilan.add(ll);
@@ -66,16 +81,16 @@ public class PgConnection {
 			}
 
 			if (ll.message != null) {
-				if (ll.getQuery() != null) {
+				if (ll.isStatement()) {
 					this.statement = ll;
 					return;
-				} else if (ll.message.startsWith("temporary file:")) {
+				} else if (statement != null && ll.message.startsWith("temporary file:")) {
 					int ind = ll.message.indexOf("size");
 					if (ind > 0) {
-						String szs = ll.message.substring(ind + 4);
+						String szs = ll.message.substring(ind + 4).trim();
 						try {
-							int k = Integer.parseInt(szs);
-							this.tempUsage += k;
+							long k = Long.parseLong(szs);
+							statement.increaseTempUsage(k);
 							return;
 						} catch (Exception p) {
 							logger.error("Failed to extract size of temp file:" + szs, p);
@@ -84,51 +99,37 @@ public class PgConnection {
 				} else if (ll.message.startsWith("duration:")) {
 					if (this.statement != null) {
 						statement.update(bindDur, parseDur, ll.getDuration(), bindDetail);
-						logWriter.write(statement);
 						resetPbcc(true);
 						return;
 					}
 				}
 			}
 
-//			else if (!waitDuration) {
-//				this.command = ll;
-//				this.waitDuration = true;
-//				if (bindDetail == null && ll.getBindDetail() != null) {
-//					bindDetail = ll.detail;
-//				}
-//				return;
-//			} else if (waitDuration && command != null && ll.command_tag != null
-//					&& ll.command_tag.equals(command.command_tag)) {
-//				ll.updateDur(bind == null ? null : bind.getDuration(), parse == null ? null : parse.getDuration(),
-//						command == null ? null : command.message, bindDetail);
-//				if(this.tempUsage > 0) {
-//					ll.setTempUsage(tempUsage);
-//				}
-//				resetPbcc(true);
-//			} else {
-//				resetPbcc(false);
-//			}
-		} else {
-			resetPbcc(false);
 		}
 
-		logWriter.write(ll);
+		writeLog(ll, true);
 	}
 
 	public void resetPbcc(boolean suc) {
 		this.waitDuration = false;
-		if (!suc) {
+
+		if (suc || statement != null) {
+			writeLog(statement, false);
+		} else if (!suc) {
 			for (LogLine logLine : bastirilan) {
-				logWriter.write(logLine);
+				writeLog(logLine, true);
 			}
 		}
 		this.parseDur = null;
 		this.bindDur = null;
 		this.bindDetail = null;
+		this.statement = null;
 		if (this.bastirilan.size() > 0)
 			this.bastirilan.clear();
-		this.tempUsage = 0;
+	}
+
+	private void writeLog(LogLine logLine, boolean canBeFiltered) {
+		logWriter.write(logLine, canBeFiltered, sentLogCount);
 	}
 
 }

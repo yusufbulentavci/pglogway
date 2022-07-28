@@ -117,7 +117,7 @@ public class LogFile {
 	}
 
 	private void processNoSession(LogLine ll) {
-		logWriter.write(ll);
+		logWriter.write(ll, true, null);
 	}
 
 	public void done() {

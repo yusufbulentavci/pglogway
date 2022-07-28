@@ -5,12 +5,14 @@ public class ElasticCon {
 	private final String port;
 	private final String user;
 	private final String pwd;
+	private final int sentLimit;
 
-	public ElasticCon(String elasticHost, String elasticPort, String elasticUser, String elasticPwd) {
+	public ElasticCon(String elasticHost, String elasticPort, String elasticUser, String elasticPwd, int elasticSentLimit) {
 		this.host=elasticHost;
 		this.port=elasticPort;
 		this.user=elasticUser;
 		this.pwd=elasticPwd;
+		this.sentLimit=elasticSentLimit;
 	}
 
 	public String getHost() {
@@ -31,6 +33,10 @@ public class ElasticCon {
 
 	public String getPwd() {
 		return pwd;
+	}
+
+	public int getSentLimit() {
+		return sentLimit;
 	}
 
 }

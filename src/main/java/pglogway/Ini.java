@@ -27,6 +27,8 @@ public class Ini {
 		String elasticPort = this.file.getString("global", "elasticport", "9200");
 		String elasticUser = this.file.getString("global", "elasticuser", null);
 		String elasticPwd = this.file.getString("global", "elasticpwd", null);
+		int elasticSentLimit = this.file.getInt("global", "elasticmaxsentperconnectionfile", 10000);
+		
 
 		String noziphours = this.file.getString("global", "noziphours", null);
 		String nocopyphours = this.file.getString("global", "nocopyhours", null);
@@ -49,7 +51,7 @@ public class Ini {
 
 		Double filterminduration = this.file.getDouble("global", "filterminduration", null);
 
-		ElasticCon econ = new ElasticCon(elasticHost, elasticPort, elasticUser, elasticPwd);
+		ElasticCon econ = new ElasticCon(elasticHost, elasticPort, elasticUser, elasticPwd, elasticSentLimit);
 
 		for (int i = 0; i < 100; i++) {
 			String section = "dir-" + i;

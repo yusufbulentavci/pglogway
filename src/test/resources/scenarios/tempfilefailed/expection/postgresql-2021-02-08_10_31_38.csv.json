@@ -1,0 +1,3 @@
+{"csv_ind":1,"vt_id":5940756,"command_tag":"SELECT","process.pid":1184909,"postgresql.log.level":"LOG","sql_state_code":"08006","postgresql.log.message":"could not send data to client: Broken pipe","query":"select * from tdbs.gerceklesme order by olusturma_tarihi;"}
+{"csv_ind":2,"vt_id":5940756,"postgresql.log.level":"FATAL","sql_state_code":"08006","postgresql.log.message":"connection to client lost","query":"select * from tdbs.gerceklesme order by olusturma_tarihi;"}
+{"csv_ind":0,"vt_id":5940756,"temp_file_size":1065,"sql_state_code":"00000","postgresql.log.message":"statement: --query--","query":"select * from tdbs.gerceklesme order by olusturma_tarihi;","command_tag":"idle"}
