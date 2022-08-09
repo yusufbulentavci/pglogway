@@ -12,7 +12,7 @@ public class LogParser {
 	static final Logger logger = LogManager.getLogger(LogParser.class);
 	
 	public static String[] parse(InputStreamReader is) {
-		String[] ret = new String[25];
+		String[] ret = new String[30];
 		int iret = 0;
 
 		StringBuilder sb = new StringBuilder();

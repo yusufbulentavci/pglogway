@@ -1,3 +1,5 @@
+2022-08-09 07:15:14.754 UTC,,,60903,,62f20982.ede7,1,,2022-08-09 07:15:14 UTC,,0,LOG,00000,"ending log output to stderr",,"Future log output will go to log destination ""csvlog"".",,,,,,"PostmasterMain, postmast
+er.c:1116","","postmaster",,0
 2021-02-08 10:31:38.692 +03,"trdb""base/pgsql_tmp/pgsql_tmp86819.1384"",dd",14942
 2021-02-08 10:31:38.692 +03,"trdb",""
 2021-02-08 10:31:38.692 +03,"trdb",14942

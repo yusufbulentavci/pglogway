@@ -217,36 +217,48 @@ public class LogLine {
 //	public static void main(String[] args) {
 //		try {
 ////			String s = "Process holding the lock: 2957. Wait queue: 43571, 154886, 3031, 152813, 154889, 154909, 154885, 31167, 65272, 65246, 3014, 43550, 3012";
-//			String s = "Process holding the lock: 3297010. Wait queue: .";
-//			//			String s = "Process holding the lock: 3295837. Wait queue: 3295785.";
-//
-//			String d1 = s.substring("Process holding the lock:".length());
-//			System.out.println(d1);
-//			int dot = d1.indexOf('.');
-//			if (dot < 0)
-//				return;
-//			String phl = d1.substring(0, dot);
-//			System.out.println(phl);
-//			Integer locker = Integer.parseInt(phl.trim());
-//			System.out.println(locker);
-//			String wq = d1.substring(dot + 1).trim();
-//			String rest = wq.substring("Wait queue:".length());
-//			rest=rest.replace('.', ' ');
-//			JSONArray locked = new JSONArray();
-//			String[] ws = rest.split(",");
-//			for (String string : ws) {
-//				string=string.trim();
-//				if(string.length()==0 || string.equals("."))
-//					continue;
-//				locked.put(Integer.parseInt(string.trim()));
+////			String s = "Process holding the lock: 3297010. Wait queue: .";
+////			//			String s = "Process holding the lock: 3295837. Wait queue: 3295785.";
+////
+////			String d1 = s.substring("Process holding the lock:".length());
+////			System.out.println(d1);
+////			int dot = d1.indexOf('.');
+////			if (dot < 0)
+////				return;
+////			String phl = d1.substring(0, dot);
+////			System.out.println(phl);
+////			Integer locker = Integer.parseInt(phl.trim());
+////			System.out.println(locker);
+////			String wq = d1.substring(dot + 1).trim();
+////			String rest = wq.substring("Wait queue:".length());
+////			rest=rest.replace('.', ' ');
+////			JSONArray locked = new JSONArray();
+////			String[] ws = rest.split(",");
+////			for (String string : ws) {
+////				string=string.trim();
+////				if(string.length()==0 || string.equals("."))
+////					continue;
+////				locked.put(Integer.parseInt(string.trim()));
+////			}
+////			System.out.println(locked.toString());
+//			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS] x");
+//			String x = "2022-08-09 07:15:14.754 UTC";
+//			if(x.endsWith("UTC")) {
+//				x=x.substring(0, x.length()-3)+"+00";
 //			}
-//			System.out.println(locked.toString());
+//			System.out.println(x);
+//			TemporalAccessor dateTime = formatter.parse(x);
+//			
+////			TemporalAccessor dateTime = formatter.parse("2022-08-09 07:15:14.754 +03");
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
 //	}
 
 	private Long parseTime(String str) {
+		if(str.endsWith("UTC")) {
+			str=str.substring(0, str.length()-3)+"+00";
+		}
 		TemporalAccessor dateTime = formatter.parse(str);
 		return dateTime.getLong(java.time.temporal.ChronoField.INSTANT_SECONDS);
 	}

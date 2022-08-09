@@ -20,6 +20,9 @@ public class Counters {
 		terminal.writeLine("filteredLogCount:" + this.filteredLogCount.get());
 		terminal.writeLine("limitElasticPushCount:" + this.limitElasticPushCount.get());
 		terminal.writeLine("elasticSent:" + this.elasticSent.get());
+		this.filteredLogCount.set(0);
+		this.limitElasticPushCount.set(0);
+		this.elasticSent.set(0);
 	}
 
 }

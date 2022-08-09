@@ -139,7 +139,7 @@ public class LogWriter {
 			if (this.elasticPush != null) {
 				if (sentLogCount != null) {
 					int val=sentLogCount.get();
-					if(val < confDir.getEcon().getSentLimit()) {
+					if(val > confDir.getEcon().getSentLimit()) {
 						Counters.one().limitElasticPushCount.incrementAndGet();
 						return;
 					}
