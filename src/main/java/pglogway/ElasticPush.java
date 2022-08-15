@@ -3,7 +3,6 @@ package pglogway;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Calendar;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
@@ -15,18 +14,20 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Node;
 import org.elasticsearch.client.NodeSelector;
 import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch.core.BulkRequest.Builder;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 
 // https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-low-usage-requests.html
 /*
@@ -50,14 +51,14 @@ public class ElasticPush {
 
 	private String indexNameWoDate;
 
-//	private RestClient restClient;
-	private BulkRequest bulkRequest;
-
-	private RestHighLevelClient highClient;
+	private RestClient restClient;
+	private ElasticsearchClient esClient;
+	private Builder bulkRequest;
 
 	private boolean checkExpiredIndexes;
 
 	private int pushed = 0;
+	private int sent = 0;
 
 	public ElasticPush(ConfDir confDir, String year, String month, String day, int hour) {
 		this.confDir = confDir;
@@ -100,12 +101,12 @@ public class ElasticPush {
 				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
 			}
 		});
-//		this.restClient = builder.build();
+		this.restClient = builder.build();
 
-		highClient = new RestHighLevelClient(builder);
+		ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
+		esClient = new ElasticsearchClient(transport);
 
 		ensureIndex();
-
 	}
 
 	private void ensureIndex() {
@@ -114,7 +115,7 @@ public class ElasticPush {
 		try {
 			Response response;
 			Request r = new Request("HEAD", indexName);
-			response = highClient.getLowLevelClient().performRequest(r);
+			response = restClient.performRequest(r);
 			if (response.getStatusLine().getStatusCode() != 200) {
 				createIndex();
 				return;
@@ -133,7 +134,7 @@ public class ElasticPush {
 		try {
 			Response response;
 			Request r = new Request("DELETE", toDel);
-			response = highClient.getLowLevelClient().performRequest(r);
+			response = restClient.performRequest(r);
 			if (response.getStatusLine().getStatusCode() != 200) {
 				logger.info("Index deleted:" + toDel);
 				return;
@@ -206,7 +207,7 @@ public class ElasticPush {
 			String crjson = ElasticPush.loadString("index-create.json");
 			r.setJsonEntity(crjson);
 
-			Response response = highClient.getLowLevelClient().performRequest(r);
+			Response response = restClient.performRequest(r);
 
 			logger.debug("We created the index");
 		} catch (IOException er) {
@@ -219,9 +220,9 @@ public class ElasticPush {
 
 	public void close() {
 		logger.info("Closing the elastic connection");
-		if (highClient != null) {
+		if (restClient != null) {
 			try {
-				highClient.close();
+				restClient.close();
 			} catch (IOException e) {
 				logger.error("close", e);
 				Main.fatal();
@@ -259,15 +260,40 @@ public class ElasticPush {
 //	}
 
 	public static void main(String[] args) throws InterruptedException, IOException {
-		System.out.println(ElasticPush.loadString("index-create.json"));
+		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+		credentialsProvider.setCredentials(AuthScope.ANY,
+				new UsernamePasswordCredentials("elastic", "sP3yiTXGADmAbJxh5mB="));
 
-//		ElasticPush rc = new ElasticPush(1);
-//		rc.connect();
-//		System.out.println("Connected");
-//		rc.tryit();
-//		Thread.sleep(5000);
-//		rc.close();
-//		System.out.println("Closed");
+		RestClientBuilder builder = RestClient
+				.builder(new HttpHost("e1", 9200, "http"));
+
+		builder.setFailureListener(new RestClient.FailureListener() {
+			@Override
+			public void onFailure(Node node) {
+				logger.error("RestClient-faillistener. Failed:" + node.toString());
+			}
+		});
+		builder.setNodeSelector(NodeSelector.SKIP_DEDICATED_MASTERS);
+
+		builder.setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
+			@Override
+			public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
+				return requestConfigBuilder.setSocketTimeout(10000);
+			}
+		});
+		builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+			@Override
+			public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+			}
+		});
+		RestClient rs = builder.build();
+
+		ElasticsearchTransport transport = new RestClientTransport(rs, new JacksonJsonpMapper());
+		ElasticsearchClient esClient = new ElasticsearchClient(transport);
+		esClient.indices().create(c -> c.index("logline"));
+		System.out.println("done");
+
 	}
 
 //	public void tryit() throws IOException {
@@ -287,33 +313,40 @@ public class ElasticPush {
 //	System.out.println(responseBody);
 //}
 
-	public void push(Map<String, Object> map) {
-		
-		if(logger.isDebugEnabled()) {
-			logger.debug("Pushed:"+map.toString());
+	public synchronized void push(LogLine ll) {
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("Pushed:" + ll.toString());
 		}
+//		BulkRequest.Builder br = new BulkRequest.Builder();
+//		br.operations(op->op.update(fn))
 //			logger.info("Pushing json");
 		if (bulkRequest == null) {
-			bulkRequest = new BulkRequest();
+			bulkRequest = new BulkRequest.Builder();
 		}
 //		Request r = new Request("PUT", indexName + "/_doc/" + (ref++));
-		IndexRequest r = new IndexRequest(indexName).id((ref++) + "").source(map, XContentType.JSON);
-		bulkRequest.add(r);
+//		IndexRequest.Builder<LogLine> indexReqBuilder = new IndexRequest.Builder<>();
+//		indexReqBuilder.index(indexName);
+//		indexReqBuilder.id((ref++) + "");
+//		indexReqBuilder.document(ll);
+//		IndexRequest r = new IndexRequest(indexName).id((ref++) + "").source(ll, XContentType.JSON);
 		this.pushed++;
-		if (bulkRequest.numberOfActions() >= 100) {
+		bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id((ref++) + "").document(ll)));
+		if (pushed-sent >= 100) {
 			flush();
 		}
 	}
 
-	public void flush() {
-		if (bulkRequest == null || bulkRequest.numberOfActions() == 0) {
+	public synchronized void flush() {
+		if (bulkRequest == null || pushed-sent==0) {
 			return;
 		}
+		sent=pushed;
 //		if (logger.isDebugEnabled()) {
 //			logger.debug("flush");
 //		}
 		try {
-			highClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+			esClient.bulk(bulkRequest.build());
 		} catch (IOException e) {
 			logger.error("flush", e);
 			Main.fatal();

@@ -6,8 +6,9 @@ import java.time.temporal.TemporalAccessor;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
+
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 //2022-07-21 09:47:27.096 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,3,"idle",2022-07-21 09:42:17 +03,42/1723265,0,LOG,00000,"statement: create table sinadene( int a);",,,,,,,,"exec_simple_query, postgres.c:1045","psql"
 //2022-07-21 09:47:27.106 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,4,"CREATE TABLE",2022-07-21 09:42:17 +03,42/1723265,0,ERROR,42704,"type ""a"" does not exist",,,,,,"create table sinadene( int a);",28,"typenameType, parse_type.c:275","psql"
@@ -16,51 +17,234 @@ import org.json.JSONObject;
 //2022-07-21 09:00:22.344 +03,"bs_rw","bs",1107680,"10.150.151.154:60936",62d8ea15.10e6e0,3871,"INSERT",2022-07-21 08:54:29 +03,22/8027705,22309712,LOG,00000,"execute S_1: INSERT INTO logging_event_property (event_id, mapped_key, mapped_value) VALUES ($1, $2, $3)","parameters: $1 = '142520', $2 = 'spring.datasource.password', $3 = '376Rs4xg'",,,,,,,"exec_execute_message, postgres.c:2065","PostgreSQL JDBC Driver"
 public class LogLine {
 	static final Logger logger = LogManager.getLogger(LogLine.class.getName());
-
+	
+	@JsonGetter("host.name")
+    public String getHostName() {
+        return ConfDir.getHostName();
+    }
+	
 	Long log_time;
+	@JsonGetter("@timestamp")
+    public Long getTimestamp() {
+        return log_time;
+    }
+
 	String user_name;
+	@JsonGetter("postgresql.log.user")
+	public String getUserName() {
+        return user_name;
+    }
+
 	String database_name;
+	@JsonGetter("postgresql.log.database")
+	public String getDatabaseName() {
+        return database_name;
+    }
+
+	final Integer pgPort;
+	@JsonGetter("postgresql.log.port")
+	public Integer getPort() {
+        return pgPort;
+    }
+	
+	Integer locker;
+	@JsonGetter("postgresql.log.locker")
+	public Integer getLocker() {
+        return locker;
+    }
+
+	Integer[] locked;
+	@JsonGetter("postgresql.log.locked")
+	public Integer[] getLocked() {
+        return locked;
+    }
+	
 	Integer process_id;
+	@JsonGetter("process.pid")
+	public Integer getPid() {
+        return this.process_id;
+    }
+	
+	Boolean unix_socket;
+	@JsonGetter("unix_socket")
+	public Boolean getUnixSocket() {
+        return this.unix_socket;
+    }
+	
 	String connection_from;
+	@JsonGetter("client.ip")
+	public String getConnectionFrom() {
+        return connection_from;
+    }
+	
+	String connection_from_port;
+	@JsonGetter("client.port")
+	public String getConnectionFromPort() {
+        return connection_from_port;
+    }
+
+	
 	String session_id;
+	@JsonGetter("session_id")
+	public String getSession_id() {
+        return session_id;
+    }
+	
 	Long session_line_num;
+	@JsonGetter("session_line_num")
+	public Long getSessionLineNum() {
+        return this.session_line_num;
+    }
+
 	String command_tag; // BEGIN, SET, COMMIT, PARSE, DISCARD ALL, SELECT, UPDATE, INSERT, idle
+	@JsonGetter("command_tag")
+	public String getCommand_tag() {
+        return command_tag;
+    }
+	
 	Long session_start_time;
-	Long virtual_transaction_id;
+	@JsonGetter("session_start_time")
+	public Long getSession_start_time() {
+        return session_start_time;
+    }
+	
 	Long transaction_id;
+	@JsonGetter("transaction_id")
+	public Long getTransaction_id() {
+        return transaction_id;
+    }
+
+	Long virtual_transaction_id;
+	@JsonGetter("virtual_transaction_id")
+	public Long getVirtual_transaction_id() {
+        return virtual_transaction_id;
+    }
+	
 	String error_severity; // DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, FATAL, PANIC, ???
-	String sql_state_code; //
+	@JsonGetter("postgresql.log.level")
+	public String getError_severity() {
+        return error_severity;
+    }
+	
+	String sql_state_code;
+	@JsonGetter("sql_state_code")
+	public String getSql_state_code() {
+        return sql_state_code;
+    }
+	
 	String message;
+	@JsonGetter("postgresql.log.message")
+	public String message() {
+        return message;
+    }
+	
 	String detail;
+	@JsonGetter("detail")
+	public String detail() {
+        return detail;
+    }
+
 	String hint;
+	@JsonGetter("hint")
+	public String hint() {
+		return hint;
+	}
+
 	String internal_query;
+	@JsonGetter("internal_query")
+	public String internal_query() {
+        return internal_query;
+    }
+
 	Integer internal_query_pos;
+	@JsonGetter("internal_query_pos")
+	public Integer getInternal_query_pos() {
+        return internal_query_pos;
+    }
+
 	String context;
+	@JsonGetter("context")
+	public String getcontext() {
+        return context;
+    }
+
 	String query;
+	@JsonGetter("query")
+	public String getquery() {
+        return query;
+    }
+
 	Integer query_pos;
+	@JsonGetter("query_pos")
+	public Integer getquery_pos() {
+        return query_pos;
+    }
+	
 	String location;
+	@JsonGetter("location")
+	public String getlocation() {
+        return location;
+    }
+
 	String application_name;
+	@JsonGetter("application_name")
+	public String getapplication_name() {
+        return application_name;
+    }
+
 	private BigDecimal duration;
+	@JsonGetter("duration")
+	public Double getduration() {
+        return duration.doubleValue();
+    }
+
 	private BigDecimal bindDur;
+	@JsonGetter("bind_duration")
+	public Double getbind_duration() {
+        return bindDur.doubleValue();
+    }
+	
 	private BigDecimal parseDur;
+	@JsonGetter("parse_duration")
+	public Double getparse_duration() {
+        return parseDur.doubleValue();
+    }
+
+	String bindDetail;
+	@JsonGetter("parameters")
+	public String getbindDetail() {
+        return bindDetail;
+    }
+
+	
 	Integer virtual_session_id;
+	@JsonGetter("virtual_session_id")
+	public Integer getvirtual_session_id() {
+        return virtual_session_id;
+    }
+	
+	private Long tempUsage = null;
+	@JsonGetter("temp_file_size")
+    public Long gettemp_file_size() {
+        return tempUsage / (1024 * 1024);
+    }
 
 	Integer csvInd;
-
-	Boolean unix_socket;
-
-	Integer locker;
-	JSONArray locked;
-
-	private String connection_from_port;
-
-	private String bindDetail;
-
+	@JsonGetter("csv_ind")
+	public Integer getcsvInd() {
+        return csvInd;
+    }
+	
+	String csv;
+	@JsonGetter("csv")
+	public String getcsv() {
+        return this.csv;
+    }
+	
 	private DateTimeFormatter formatter;
 
-	private final Integer pgPort;
 
-	private Long tempUsage = null;
+
 
 	private boolean isStatement=false;
 
@@ -200,13 +384,14 @@ public class LogLine {
 			String wq = d1.substring(dot + 1).trim();
 			String rest = wq.substring("Wait queue:".length());
 			rest = rest.replace('.', ' ');
-			this.locked = new JSONArray();
 			String[] ws = rest.split(",");
+			this.locked = new Integer[ws.length];
+			int i=0;
 			for (String string : ws) {
 				string = string.trim();
 				if (string.length() == 0 || string.equals("."))
 					continue;
-				locked.put(Integer.parseInt(string.trim()));
+				locked[i++]=Integer.parseInt(string.trim());
 			}
 //			System.out.println(locked.toString());
 		} catch (Exception e) {
@@ -506,6 +691,10 @@ public class LogLine {
 
 	public boolean isStatement() {
 		return isStatement;
+	}
+
+	public void setCsv(String jsonFileName) {
+		this.csv=jsonFileName;
 	}
 
 }

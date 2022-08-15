@@ -145,11 +145,12 @@ public class LogWriter {
 					}
 					sentLogCount.incrementAndGet();
 				}
-				this.elasticPush.push(ll.toJson(csvFileName).toMap());
+				this.elasticPush.push(ll);
 				Counters.one().elasticSent.incrementAndGet();
 			}
 		}
 
+		ll.setCsv(jsonFileName);
 		if (Main.testing) {
 			try {
 				this.fileWriter.write(ll.toJson(jsonFileName).toString());
