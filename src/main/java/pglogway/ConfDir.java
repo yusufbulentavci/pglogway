@@ -6,7 +6,7 @@ import java.net.UnknownHostException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ConfDir {
+public class ConfDir implements ElasticConf{
 	static final Logger logger = LogManager.getLogger(ConfDir.class);
 	private static String hostName;
 	private final String path;

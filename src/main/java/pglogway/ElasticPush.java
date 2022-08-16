@@ -2,6 +2,7 @@ package pglogway;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
@@ -47,7 +48,7 @@ public class ElasticPush {
 
 	long ref;
 	String indexName;
-	private ConfDir confDir;
+	private ElasticConf confDir;
 
 	private String indexNameWoDate;
 
@@ -60,7 +61,43 @@ public class ElasticPush {
 	private int pushed = 0;
 	private int sent = 0;
 
-	public ElasticPush(ConfDir confDir, String year, String month, String day, int hour) {
+	public static void main(String[] args) {
+		logger.info("Hello");
+		ElasticConf cd = new ElasticConf() {
+
+			@Override
+			public String getCluster() {
+				return "denec";
+			}
+
+			@Override
+			public String getPort() {
+				return "9200";
+			}
+
+			@Override
+			public ElasticCon getEcon() {
+				return new ElasticCon("e1", "9200", "elastic", "sP3yiTXGADmAbJxh5mB=", 10000);
+			}
+
+			@Override
+			public int getElasticExpireDays() {
+				return 10;
+			}
+		};
+
+		logger.info("Starting up");
+		ElasticPush ep = new ElasticPush(cd, "2022", "12", "20", 1);
+		ep.connect();
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS] x");
+		LogLine ll = new LogLine(formatter, 5, "ERROR", "LOG_CSV_PARSE", "csv file modified", 10);
+		ep.push(ll);
+		
+		ep.flush();
+	}
+
+	public ElasticPush(ElasticConf confDir, String year, String month, String day, int hour) {
 		this.confDir = confDir;
 		this.indexNameWoDate = "pg" + confDir.getCluster() + "_" + ConfDir.getHostName() + "_"
 				+ (confDir.getPort().equals("5432") ? "" : confDir.getPort()) + "_";
@@ -168,20 +205,15 @@ public class ElasticPush {
 	private static InputStream getRes(String rn) {
 
 		if (!rn.startsWith("/")) {
-			// rn = rn.substring(1);
 			rn = "/" + rn;
 		}
 
-		// InputStream u = ClassLoader.getSystemClassLoader().getResourceAsStream(rn);
 		InputStream u = ElasticPush.class.getResourceAsStream(rn);
 		if (u != null)
 			return u;
-		// logger.debug("Failed for:" + rn);
 
 		rn = rn.substring(1);
 
-		// logger.debug("Tried for:" + rn);
-		// u = ClassLoader.getSystemClassLoader().getResourceAsStream(rn);
 		u = ElasticPush.class.getResourceAsStream(rn);
 		return u;
 	}
@@ -195,9 +227,6 @@ public class ElasticPush {
 		byte[] buffer = new byte[100000];
 		int t = IOUtils.read(f, buffer);
 		String s = new String(buffer, 0, t, "UTF-8");
-		// System.err.println("========="+rn+"============"+t);
-		// System.err.println(s);
-		// System.err.println("========================");
 		return s;
 	}
 
@@ -230,121 +259,26 @@ public class ElasticPush {
 		}
 	}
 
-//	public void tryit() throws IOException {
-//		Response response = restClient.performRequest(new Request("GET", "/"));
-//		RequestLine requestLine = response.getRequestLine(); 
-//		HttpHost host = response.getHost(); 
-//		int statusCode = response.getStatusLine().getStatusCode();
-//		System.out.println(statusCode);
-//		Header[] headers = response.getHeaders(); 
-//		String responseBody = EntityUtils.toString(response.getEntity());
-//		System.out.println(responseBody);
-//	}
-
-//	public void tryit() throws IOException {
-//		Request r = new Request("PUT", "denelogs2");
-//		JSONObject settings = new JSONObject();
-//		settings.put("number_of_shards", 1);
-//		JSONObject jo = new JSONObject();
-//		jo.put("settings", settings);
-//		r.setJsonEntity(jo.toString());
-//		Response response = restClient.performRequest(r);
-//
-//		RequestLine requestLine = response.getRequestLine();
-//		HttpHost host = response.getHost();
-//		int statusCode = response.getStatusLine().getStatusCode();
-//		System.out.println(statusCode);
-//		Header[] headers = response.getHeaders();
-//		String responseBody = EntityUtils.toString(response.getEntity());
-//		System.out.println(responseBody);
-//	}
-
-	public static void main(String[] args) throws InterruptedException, IOException {
-		final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-		credentialsProvider.setCredentials(AuthScope.ANY,
-				new UsernamePasswordCredentials("elastic", "sP3yiTXGADmAbJxh5mB="));
-
-		RestClientBuilder builder = RestClient
-				.builder(new HttpHost("e1", 9200, "http"));
-
-		builder.setFailureListener(new RestClient.FailureListener() {
-			@Override
-			public void onFailure(Node node) {
-				logger.error("RestClient-faillistener. Failed:" + node.toString());
-			}
-		});
-		builder.setNodeSelector(NodeSelector.SKIP_DEDICATED_MASTERS);
-
-		builder.setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
-			@Override
-			public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
-				return requestConfigBuilder.setSocketTimeout(10000);
-			}
-		});
-		builder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-			@Override
-			public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
-				return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-			}
-		});
-		RestClient rs = builder.build();
-
-		ElasticsearchTransport transport = new RestClientTransport(rs, new JacksonJsonpMapper());
-		ElasticsearchClient esClient = new ElasticsearchClient(transport);
-		esClient.indices().create(c -> c.index("logline"));
-		System.out.println("done");
-
-	}
-
-//	public void tryit() throws IOException {
-//	Request r=new Request("PUT", "denelogs1/_doc/8");
-//	JSONObject jo=new JSONObject();
-//	jo.put("model", "Vosvos");
-//	jo.put("year", 1950);
-//	r.setJsonEntity(jo.toString());
-//	Response response = restClient.performRequest(r);
-//	
-//	RequestLine requestLine = response.getRequestLine(); 
-//	HttpHost host = response.getHost(); 
-//	int statusCode = response.getStatusLine().getStatusCode();
-//	System.out.println(statusCode);
-//	Header[] headers = response.getHeaders(); 
-//	String responseBody = EntityUtils.toString(response.getEntity());
-//	System.out.println(responseBody);
-//}
-
 	public synchronized void push(LogLine ll) {
 
 		if (logger.isDebugEnabled()) {
 			logger.debug("Pushed:" + ll.toString());
 		}
-//		BulkRequest.Builder br = new BulkRequest.Builder();
-//		br.operations(op->op.update(fn))
-//			logger.info("Pushing json");
 		if (bulkRequest == null) {
 			bulkRequest = new BulkRequest.Builder();
 		}
-//		Request r = new Request("PUT", indexName + "/_doc/" + (ref++));
-//		IndexRequest.Builder<LogLine> indexReqBuilder = new IndexRequest.Builder<>();
-//		indexReqBuilder.index(indexName);
-//		indexReqBuilder.id((ref++) + "");
-//		indexReqBuilder.document(ll);
-//		IndexRequest r = new IndexRequest(indexName).id((ref++) + "").source(ll, XContentType.JSON);
 		this.pushed++;
 		bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id((ref++) + "").document(ll)));
-		if (pushed-sent >= 100) {
+		if (pushed - sent >= 100) {
 			flush();
 		}
 	}
 
 	public synchronized void flush() {
-		if (bulkRequest == null || pushed-sent==0) {
+		if (bulkRequest == null || pushed - sent == 0) {
 			return;
 		}
-		sent=pushed;
-//		if (logger.isDebugEnabled()) {
-//			logger.debug("flush");
-//		}
+		sent = pushed;
 		try {
 			esClient.bulk(bulkRequest.build());
 		} catch (IOException e) {
