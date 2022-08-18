@@ -480,7 +480,7 @@ public class LogLine {
 //	}
 
 	private Long parseTime(String str) {
-		if (str.endsWith("UTC")) {
+		if (str.endsWith("UTC") || str.endsWith("GMT")) {
 			str = str.substring(0, str.length() - 3) + "+00";
 		}
 		TemporalAccessor dateTime = formatter.parse(str);

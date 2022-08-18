@@ -9,7 +9,7 @@
 				"format": "strict_date_optional_time||epoch_second"
 			},
 			"session_id": {
-				"type": "text"
+				"type": "keyword"
 			},
 			"session_line_num": {
 				"type": "long"
@@ -28,7 +28,7 @@
 				"type": "long"
 			},
 			"sql_state_code": {
-				"type": "text"
+				"type": "keyword"
 			},
 			"detail": {
 				"type": "text"
@@ -46,7 +46,8 @@
 				"type": "text"
 			},
 			"query": {
-				"type": "text"
+				"type": "text",
+                "fielddata": true
 			},
 			"query_pos": {
 				"type": "long"
@@ -55,7 +56,7 @@
 				"type": "text"
 			},
 			"application_name": {
-				"type": "text"
+				"type": "keyword"
 			},
 			"duration": {
 				"type": "double"
@@ -81,7 +82,7 @@
 			"host":{
 				"properties":{
 					"name":{
-						"type":"text"
+						"type":"keyword"
 					}
 				}
 			},
