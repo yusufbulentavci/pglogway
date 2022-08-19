@@ -2,7 +2,6 @@ package pglogway;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
@@ -22,6 +21,9 @@ import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
@@ -60,42 +62,42 @@ public class ElasticPush {
 
 	private int pushed = 0;
 	private int sent = 0;
-
-	public static void main(String[] args) {
-		logger.info("Hello");
-		ElasticConf cd = new ElasticConf() {
-
-			@Override
-			public String getCluster() {
-				return "denec";
-			}
-
-			@Override
-			public String getPort() {
-				return "9200";
-			}
-
-			@Override
-			public ElasticCon getEcon() {
-				return new ElasticCon("e1", "9200", "elastic", "sP3yiTXGADmAbJxh5mB=", 10000);
-			}
-
-			@Override
-			public int getElasticExpireDays() {
-				return 10;
-			}
-		};
-
-		logger.info("Starting up");
-		ElasticPush ep = new ElasticPush(cd, "2022", "12", "20", 1);
-		ep.connect();
-		
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS] x");
-		LogLine ll = new LogLine(formatter, 5, "ERROR", "LOG_CSV_PARSE", "csv file modified", 10);
-		ep.push(ll);
-		
-		ep.flush();
-	}
+//
+//	public static void main(String[] args) {
+//		logger.info("Hello");
+//		ElasticConf cd = new ElasticConf() {
+//
+//			@Override
+//			public String getCluster() {
+//				return "denec";
+//			}
+//
+//			@Override
+//			public String getPort() {
+//				return "9200";
+//			}
+//
+//			@Override
+//			public ElasticCon getEcon() {
+//				return new ElasticCon("e1", "9200", "elastic", "sP3yiTXGADmAbJxh5mB=", 10000);
+//			}
+//
+//			@Override
+//			public int getElasticExpireDays() {
+//				return 10;
+//			}
+//		};
+//
+//		logger.info("Starting up");
+//		ElasticPush ep = new ElasticPush(cd, "2022", "12", "20", 1);
+//		ep.connect();
+//		
+//		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS] x");
+//		LogLine ll = new LogLine(formatter, 5, "ERROR", "LOG_CSV_PARSE", "csv file modified", 10);
+//		ep.push(ll);
+//		
+//		ep.flush();
+//	}
 
 	public ElasticPush(ElasticConf confDir, String year, String month, String day, int hour) {
 		this.confDir = confDir;
@@ -262,7 +264,7 @@ public class ElasticPush {
 	public synchronized void push(LogLine ll) {
 
 		if (logger.isDebugEnabled()) {
-			logger.debug("Pushed:" + ll.toString());
+			logger.debug("Pushed:" + toJacksonString(ll));
 		}
 		if (bulkRequest == null) {
 			bulkRequest = new BulkRequest.Builder();
@@ -271,6 +273,16 @@ public class ElasticPush {
 		bulkRequest.operations(op -> op.index(idx -> idx.index(indexName).id((ref++) + "").document(ll)));
 		if (pushed - sent >= 100) {
 			flush();
+		}
+	}
+
+	ObjectMapper mapper = new ObjectMapper();
+	private String toJacksonString(LogLine ll) {
+		try {
+			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ll);
+		} catch (JsonProcessingException e) {
+			logger.error("Jackson can not generate text from LogLine", e);
+			return "error";
 		}
 	}
 

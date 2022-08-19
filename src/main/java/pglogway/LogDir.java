@@ -242,6 +242,9 @@ public class LogDir implements Runnable {
 				return f.lastModified() < older && f.length() == 0;
 			}
 		});
+		if(empty == null) {
+			return;
+		}
 		for (File file : empty) {
 			file.delete();
 			logger.info("Delete old csv pair file:" + file.getAbsolutePath());

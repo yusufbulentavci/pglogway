@@ -135,6 +135,7 @@ public class LogWriter {
 			Counters.one().filteredLogCount.incrementAndGet();
 			return;
 		}
+		ll.setCsv(jsonFileName);
 		if (!Main.testing) {
 			if (this.elasticPush != null) {
 				if (sentLogCount != null) {
@@ -150,17 +151,16 @@ public class LogWriter {
 			}
 		}
 
-		ll.setCsv(jsonFileName);
 		if (Main.testing) {
 			try {
 				this.fileWriter.write(ll.toJson(jsonFileName).toString());
 				this.fileWriter.write(System.lineSeparator());
 				this.fileWriter.flush();
 
-				if (logger.isDebugEnabled()) {
-					logger.debug(ll.toString());
-					logger.debug(ll.toJson(jsonFileName));
-				}
+//				if (logger.isDebugEnabled()) {
+//					logger.debug(ll.toString());
+//					logger.debug(ll.toJson(jsonFileName));
+//				}
 			} catch (IOException e) {
 				logger.error("Error in line:" + ll.toString(), e);
 			}

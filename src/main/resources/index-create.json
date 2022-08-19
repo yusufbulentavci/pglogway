@@ -47,7 +47,7 @@
 			},
 			"query": {
 				"type": "text",
-                "fielddata": true
+				"index": true
 			},
 			"query_pos": {
 				"type": "long"
@@ -96,10 +96,10 @@
 			"client": {
 				"properties": {
 					"ip": {
-						"type": "ip"
+						"type":"keyword"
 					},
 					"port": {
-						"type": "long"
+						"type":"keyword"
 					}
 				}
 			},

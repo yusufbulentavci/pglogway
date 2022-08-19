@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 //2022-07-21 09:47:27.096 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,3,"idle",2022-07-21 09:42:17 +03,42/1723265,0,LOG,00000,"statement: create table sinadene( int a);",,,,,,,,"exec_simple_query, postgres.c:1045","psql"
 //2022-07-21 09:47:27.106 +03,"postgres","sina",1109630,"[local]",62d8f549.10ee7e,4,"CREATE TABLE",2022-07-21 09:42:17 +03,42/1723265,0,ERROR,42704,"type ""a"" does not exist",,,,,,"create table sinadene( int a);",28,"typenameType, parse_type.c:275","psql"
@@ -646,7 +647,7 @@ public class LogLine {
 		return ret;
 	}
 
-	public void update(BigDecimal bind, BigDecimal parse, BigDecimal duration, String bindDetail) {
+	public void update(BigDecimal bind, BigDecimal parse, BigDecimal duration, String bindDetail, String commandTag) {
 		this.bindDur = bind;
 		this.parseDur = parse;
 		if (duration == null) {
@@ -657,8 +658,12 @@ public class LogLine {
 			duration.add(bindDur);
 		if (parseDur != null)
 			duration.add(parseDur);
+		
+		if (commandTag!=null) {
+			this.command_tag = commandTag;
+		}
 
-		duration = durInSec(duration);
+		this.duration = durInSec(duration);
 
 		this.bindDetail = bindDetail;
 	}
@@ -672,6 +677,7 @@ public class LogLine {
 		return dur.divide(bin);
 	}
 
+	@JsonIgnore
 	public BigDecimal getDuration() {
 		return duration;
 	}
@@ -692,6 +698,7 @@ public class LogLine {
 	}
 
 //	public static void main(String[] args) throws ParseException {
+	
 //		String str = "2021-02-08 10:31:38.692 +03";
 ////		String str="2021-09-09 08:02:40 +03";
 //		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS x");
@@ -709,14 +716,17 @@ public class LogLine {
 ////		System.out.println(dateTime.toString());
 //	}
 
+	@JsonIgnore
 	public Integer getPgPort() {
 		return pgPort;
 	}
 
+	@JsonIgnore
 	public String getBindDetail() {
 		return bindDetail;
 	}
 
+	@JsonIgnore
 	public void increaseTempUsage(long tempUsage2) {
 		if (this.tempUsage == null) {
 			this.tempUsage = 0l;
@@ -724,10 +734,12 @@ public class LogLine {
 		this.tempUsage += tempUsage2;
 	}
 
+	@JsonIgnore
 	public String getQuery() {
 		return query;
 	}
 
+	@JsonIgnore
 	public boolean isStatement() {
 		return isStatement;
 	}

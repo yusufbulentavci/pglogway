@@ -98,7 +98,7 @@ public class PgConnection {
 					}
 				} else if (ll.message.startsWith("duration:")) {
 					if (this.statement != null) {
-						statement.update(bindDur, parseDur, ll.getDuration(), bindDetail);
+						statement.update(bindDur, parseDur, ll.getDuration(), bindDetail, ll.command_tag);
 						resetPbcc(true);
 						return;
 					}

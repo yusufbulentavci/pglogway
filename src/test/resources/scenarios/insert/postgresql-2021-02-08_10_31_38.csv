@@ -1,0 +1,2 @@
+2022-08-19 05:12:10.551 GMT,"postgres","postgres",74799,"[local]",62ff1baa.1242f,18,"idle in transaction",2022-08-19 05:12:10 GMT,8/1807,807,LOG,00000,"statement: insert into pgbench_branches(bid,bbalance) values(1,0)",,,,,,,,"exec_simple_query, postgres.c:1013","pgbench","client backend",,0
+2022-08-19 05:12:10.551 GMT,"postgres","postgres",74799,"[local]",62ff1baa.1242f,19,"INSERT",2022-08-19 05:12:10 GMT,8/1807,807,LOG,00000,"duration: 0.187 ms",,,,,,,,"exec_simple_query, postgres.c:1303","pgbench","client backend",,0
