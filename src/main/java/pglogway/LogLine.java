@@ -312,6 +312,9 @@ public class LogLine {
 		this.pgPort = pgPort;
 		this.csvInd = csvInd;
 		{
+			if(record[0] == null) {
+				throw new RuntimeException("Time field is empty; invalid message at csv index:"+csvInd);
+			}
 			this.log_time = parseTime(record[0]);
 		}
 //		String llmen = nul(record[0]+" "+record[1));
@@ -481,11 +484,15 @@ public class LogLine {
 //	}
 
 	private Long parseTime(String str) {
-		if (str.endsWith("UTC") || str.endsWith("GMT")) {
-			str = str.substring(0, str.length() - 3) + "+00";
+		try {
+			if (str.endsWith("UTC") || str.endsWith("GMT")) {
+				str = str.substring(0, str.length() - 3) + "+00";
+			}
+			TemporalAccessor dateTime = formatter.parse(str);
+			return dateTime.getLong(java.time.temporal.ChronoField.INSTANT_SECONDS);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
-		TemporalAccessor dateTime = formatter.parse(str);
-		return dateTime.getLong(java.time.temporal.ChronoField.INSTANT_SECONDS);
 	}
 
 	// duration: 0.153 ms
@@ -658,8 +665,8 @@ public class LogLine {
 			duration.add(bindDur);
 		if (parseDur != null)
 			duration.add(parseDur);
-		
-		if (commandTag!=null) {
+
+		if (commandTag != null) {
 			this.command_tag = commandTag;
 		}
 
@@ -698,7 +705,7 @@ public class LogLine {
 	}
 
 //	public static void main(String[] args) throws ParseException {
-	
+
 //		String str = "2021-02-08 10:31:38.692 +03";
 ////		String str="2021-09-09 08:02:40 +03";
 //		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS x");

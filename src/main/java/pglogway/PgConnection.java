@@ -71,7 +71,7 @@ public class PgConnection {
 				return;
 			} else if (ll.command_tag.equals("BIND")) {
 //				this.bind = ll;
-				if (ll.detail.startsWith("parameters:")) {
+				if (ll.detail != null && ll.detail.startsWith("parameters:")) {
 					bindDetail = ll.detail.substring("parameters:".length() + 1);
 				}
 				this.bindDur = ll.getDuration();
