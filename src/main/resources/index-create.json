@@ -46,7 +46,7 @@
 				"type": "text"
 			},
 			"query": {
-				"type": "text",
+				"type": "text"
 			},
 			"query_hash": {
 				"type": "integer"
