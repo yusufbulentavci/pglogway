@@ -1,6 +1,7 @@
 package pglogway;
 
 import java.math.BigDecimal;
+import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
@@ -288,6 +289,12 @@ public class LogLine {
 
 	private boolean isStatement = false;
 
+	private Integer query_hash;
+	@JsonGetter("query_hash")
+	public Integer getQuery_hash() {
+		return this.query_hash;
+	}
+
 	public LogLine(DateTimeFormatter formatter, Integer csvInd, String error_severity, String command_tag,
 			String message, Integer pgPort) {
 		this.formatter = formatter;
@@ -312,8 +319,8 @@ public class LogLine {
 		this.pgPort = pgPort;
 		this.csvInd = csvInd;
 		{
-			if(record[0] == null) {
-				throw new RuntimeException("Time field is empty; invalid message at csv index:"+csvInd);
+			if (record[0] == null) {
+				throw new RuntimeException("Time field is empty; invalid message at csv index:" + csvInd);
 			}
 			this.log_time = parseTime(record[0]);
 		}
@@ -356,7 +363,7 @@ public class LogLine {
 		internal_query = nul(record[16]);
 		internal_query_pos = parseInt(record[17]);
 		context = nul(record[18]);
-		query = nul(record[19]);
+		setQuery(nul(record[19]));
 		query_pos = parseInt(record[20]);
 		location = nul(record[21]);
 		application_name = nul(record[22]);
@@ -380,7 +387,7 @@ public class LogLine {
 				if (this.message.startsWith("statement") || this.message.startsWith("execute")) {
 					int ind = this.message.indexOf(":");
 					if (ind > 0) {
-						this.query = this.message.substring(ind + 1).trim();
+						setQuery(this.message.substring(ind + 1).trim());
 						this.message = this.message.replace(this.query, "--query--");
 						this.isStatement = true;
 					}
@@ -753,6 +760,21 @@ public class LogLine {
 
 	public void setCsv(String jsonFileName) {
 		this.csv = jsonFileName;
+	}
+
+	private void setQuery(String query) {
+		this.query = query;
+		if (query == null)
+			return;
+		this.query_hash = digest(query);
+	}
+
+	private Integer digest(String query2) {
+		int hash = 7;
+		for (int i = 0; i < query2.length(); i++) {
+			hash = hash * 31 + query2.charAt(i);
+		}
+		return hash;
 	}
 
 }

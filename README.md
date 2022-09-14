@@ -92,4 +92,6 @@ telnet'e version komutu eklendi
 csv dosyasinda hata olusursa, o csv dosyasi ignore edilerek calismaya devam ediliyor
 2.6.0
 alarm
+2.8.0
+query_hash added
 

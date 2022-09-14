@@ -47,7 +47,9 @@
 			},
 			"query": {
 				"type": "text",
-				"index": true
+			},
+			"query_hash": {
+				"type": "integer"
 			},
 			"query_pos": {
 				"type": "long"
