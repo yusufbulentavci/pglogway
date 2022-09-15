@@ -171,5 +171,11 @@ public class LogFile {
 			return 0;
 		return this.logWriter.getElasticPushed();
 	}
+	
+	public int getPgPushed() {
+		if (this.logWriter == null)
+			return 0;
+		return this.logWriter.getPgPushed();
+	}
 
 }

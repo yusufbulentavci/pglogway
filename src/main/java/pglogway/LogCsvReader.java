@@ -75,7 +75,7 @@ public class LogCsvReader {
 									if (len - _filePointer < 1000) {
 										len = csvFile.length();
 										if (len - _filePointer < 1000) {
-											Thread.sleep(1000);
+											Thread.sleep(3000);
 										}
 									}
 									dd = readCsvLine();

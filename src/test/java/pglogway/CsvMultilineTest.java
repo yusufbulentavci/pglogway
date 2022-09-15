@@ -18,9 +18,9 @@ public class CsvMultilineTest extends ScenarioTest {
 	@BeforeClass
 	public static void kur() throws Exception {
 		Main.testing = true;
-		ElasticCon econ = new ElasticCon("localhost", "9200", "euser", "epwd", 1000);
+		DataSourceCon econ = new DataSourceCon("localhost", "9200", "euser", "epwd", 1000);
 		confDir = new ConfDir(true, econ, "/tmp/csvmultiline", "mycluster", "5433", 5, new HourList(), new HourList(), 0, 0,
-				0, null, null, null, null, null, null, null, null, false, "WARN");
+				0, null, null, null, null, null, null, null, null, false, "WARN", false, null);
 	}
 
 	@Test

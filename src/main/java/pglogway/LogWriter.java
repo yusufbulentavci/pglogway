@@ -22,6 +22,8 @@ public class LogWriter {
 	private final String jsonFileName;
 
 	private final ElasticPush elasticPush;
+	private final PgPush pgPush;
+	
 	private final Alarm alarm;
 
 	private final File csvFile;
@@ -40,6 +42,10 @@ public class LogWriter {
 		this.csvFileName = csvFileName;
 		this.csvFile = new File(dir, csvFileName);
 		this.confDir = confDir;
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("Logwriter is initializing for:"+dir.getPath());
+		}
 
 		if (!csvFileName.startsWith("postgresql-")) {
 			throw new RuntimeException("Unexpected file name, should be start with postgres-:" + csvFileName);
@@ -56,6 +62,10 @@ public class LogWriter {
 			String year = m.group(1);
 			String month = m.group(2);
 			String day = m.group(3);
+			
+			if(logger.isDebugEnabled()) {
+				logger.debug("Logwriter got a match;"+year+"-"+month+"-"+day);
+			}
 
 			this.hour = Integer.parseInt(m.group(4));
 
@@ -63,6 +73,12 @@ public class LogWriter {
 				this.elasticPush = new ElasticPush(confDir, year, month, day, hour);
 			} else {
 				this.elasticPush = null;
+			}
+			
+			if(confDir.isPushPg()) {
+				this.pgPush = new PgPush(confDir, year, month, day, hour);
+			}else {
+				this.pgPush = null;
 			}
 
 			if (confDir.getAlarm()) {
@@ -74,6 +90,8 @@ public class LogWriter {
 			if (!Main.testing) {
 				if (this.elasticPush != null)
 					this.elasticPush.connect();
+				if (this.pgPush != null)
+					this.pgPush.connect();
 			}
 		} else {
 			throw new RuntimeException("Unexpected file name, should be start with postgres-:" + csvFileName);
@@ -149,6 +167,18 @@ public class LogWriter {
 				this.elasticPush.push(ll);
 				Counters.one().elasticSent.incrementAndGet();
 			}
+			if (this.pgPush != null) {
+				if (sentLogCount != null) {
+					int val=sentLogCount.get();
+					if(val > confDir.getPpCon().getSentLimit()) {
+						Counters.one().limitPgPushCount.incrementAndGet();
+						return;
+					}
+					sentLogCount.incrementAndGet();
+				}
+				this.pgPush.push(ll);
+				Counters.one().pgSent.incrementAndGet();
+			}
 		}
 
 		if (Main.testing) {
@@ -203,6 +233,8 @@ public class LogWriter {
 		if (!Main.testing) {
 			if (this.elasticPush != null)
 				this.elasticPush.close();
+			if (this.pgPush != null)
+				this.pgPush.close();
 		}
 		if (Main.testing) {
 			try {
@@ -223,6 +255,8 @@ public class LogWriter {
 		if (!Main.testing) {
 			if (this.elasticPush != null)
 				this.elasticPush.flush();
+			if (this.pgPush != null)
+				this.pgPush.flush();
 		}
 
 	}
@@ -230,12 +264,20 @@ public class LogWriter {
 	public void checkExpiredIndexes() {
 		if (this.elasticPush != null)
 			this.elasticPush.checkExpiredIndexes();
+		if (this.pgPush != null)
+			this.pgPush.checkExpiredIndexes();
 	}
 
 	public int getElasticPushed() {
 		if (this.elasticPush == null)
 			return 0;
 		return this.elasticPush.getPushed();
+	}
+
+	public int getPgPushed() {
+		if (this.pgPush == null)
+			return 0;
+		return this.pgPush.getPushed();
 	}
 
 }

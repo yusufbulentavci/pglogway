@@ -68,6 +68,9 @@ log file /var/log/pglogway/pglogway.log
 >exit
 ```
 # History
+3.0.0
+Push logs to postgresql server
+
 1.2.0
 unix_socket added to json. If client_connection came as [local] client.ip will be null and unix_socket will be true
 

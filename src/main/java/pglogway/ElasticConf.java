@@ -6,7 +6,7 @@ public interface ElasticConf {
 
 	String getPort();
 
-	ElasticCon getEcon();
+	DataSourceCon getEcon();
 
 	int getElasticExpireDays();
 

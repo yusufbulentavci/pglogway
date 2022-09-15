@@ -1,9 +1,9 @@
 package pglogway;
 
 import java.math.BigDecimal;
-import java.security.MessageDigest;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -221,7 +221,7 @@ public class LogLine {
 		return application_name;
 	}
 
-	private BigDecimal duration;
+	BigDecimal duration;
 
 	@JsonGetter("duration")
 	public Double getduration() {
@@ -230,7 +230,7 @@ public class LogLine {
 		return duration.doubleValue();
 	}
 
-	private BigDecimal bindDur;
+	BigDecimal bindDur;
 
 	@JsonGetter("bind_duration")
 	public Double getbind_duration() {
@@ -239,7 +239,7 @@ public class LogLine {
 		return bindDur.doubleValue();
 	}
 
-	private BigDecimal parseDur;
+	BigDecimal parseDur;
 
 	@JsonGetter("parse_duration")
 	public Double getparse_duration() {
@@ -262,7 +262,7 @@ public class LogLine {
 		return virtual_session_id;
 	}
 
-	private Long tempUsage = null;
+	Long tempUsage = null;
 
 	@JsonGetter("temp_file_size")
 	public Long gettemp_file_size() {
@@ -289,7 +289,7 @@ public class LogLine {
 
 	private boolean isStatement = false;
 
-	private Integer query_hash;
+	Integer query_hash;
 	@JsonGetter("query_hash")
 	public Integer getQuery_hash() {
 		return this.query_hash;
@@ -304,6 +304,8 @@ public class LogLine {
 		this.message = message;
 		this.pgPort = pgPort;
 	}
+	
+	
 
 	// 2021-02-08 10:31:38.693
 	// yyyy-MM-dd HH:mm:ss.SSS
@@ -696,20 +698,6 @@ public class LogLine {
 		return duration;
 	}
 
-	@Override
-	public String toString() {
-		return "LogLine [log_time=" + log_time + ", user_name=" + user_name + ", database_name=" + database_name
-				+ ", process_id=" + process_id + ", connection_from=" + connection_from + ", session_id=" + session_id
-				+ ", session_line_num=" + session_line_num + ", command_tag=" + command_tag + ", session_start_time="
-				+ session_start_time + ", virtual_transaction_id=" + virtual_transaction_id + ", transaction_id="
-				+ transaction_id + ", error_severity=" + error_severity + ", sql_state_code=" + sql_state_code
-				+ ", message=" + message + ", detail=" + detail + ", hint=" + hint + ", internal_query="
-				+ internal_query + ", internal_query_pos=" + internal_query_pos + ", context=" + context + ", query="
-				+ query + ", query_pos=" + query_pos + ", location=" + location + ", application_name="
-				+ application_name + ", duration=" + duration + ", bindDur=" + bindDur + ", parseDur=" + parseDur
-				+ ", virtual_session_id=" + virtual_session_id + ", csvInd=" + csvInd + ", unix_socket=" + unix_socket
-				+ ", connection_from_port=" + connection_from_port + "]";
-	}
 
 //	public static void main(String[] args) throws ParseException {
 
@@ -775,6 +763,24 @@ public class LogLine {
 			hash = hash * 31 + query2.charAt(i);
 		}
 		return hash;
+	}
+
+	@Override
+	public String toString() {
+		return "LogLine [log_time=" + log_time + ", user_name=" + user_name + ", database_name=" + database_name
+				+ ", pgPort=" + pgPort + ", locker=" + locker + ", locked=" + Arrays.toString(locked) + ", process_id="
+				+ process_id + ", unix_socket=" + unix_socket + ", connection_from=" + connection_from
+				+ ", connection_from_port=" + connection_from_port + ", session_id=" + session_id
+				+ ", session_line_num=" + session_line_num + ", command_tag=" + command_tag + ", session_start_time="
+				+ session_start_time + ", transaction_id=" + transaction_id + ", virtual_transaction_id="
+				+ virtual_transaction_id + ", error_severity=" + error_severity + ", sql_state_code=" + sql_state_code
+				+ ", message=" + message + ", detail=" + detail + ", hint=" + hint + ", internal_query="
+				+ internal_query + ", internal_query_pos=" + internal_query_pos + ", context=" + context + ", query="
+				+ query + ", query_pos=" + query_pos + ", location=" + location + ", application_name="
+				+ application_name + ", duration=" + duration + ", bindDur=" + bindDur + ", parseDur=" + parseDur
+				+ ", bindDetail=" + bindDetail + ", virtual_session_id=" + virtual_session_id + ", tempUsage="
+				+ tempUsage + ", csvInd=" + csvInd + ", csv=" + csv + ", formatter=" + formatter + ", isStatement="
+				+ isStatement + ", query_hash=" + query_hash + "]";
 	}
 
 }

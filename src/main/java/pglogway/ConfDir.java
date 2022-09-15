@@ -14,7 +14,7 @@ public class ConfDir implements ElasticConf{
 	private final String port;
 
 	private final int elasticExpireDays;
-	private final ElasticCon econ;
+	private final DataSourceCon econ;
 
 	private final HourList noZip;
 	private final HourList noCopy;
@@ -34,14 +34,19 @@ public class ConfDir implements ElasticConf{
 	private final Boolean elasticDir;
 	private final Boolean alarm;
 	private final String alarmLevel;
+	
+	private boolean pushPg;
+	private DataSourceCon ppCon;
 
-	public ConfDir(Boolean elasticDir, ElasticCon econ, String path, String cluster, String port, int elasticExpireDays,
+	public ConfDir(Boolean elasticDir, DataSourceCon econ, String path, String cluster, String port, int elasticExpireDays,
 			HourList noZip, HourList noCopy, int letLogStayInMins, int hourlyGzipTimeoutInMins,
 			int hourlyStoreTimeoutInMins, String storeMethod, String storeHost, String storePath,
 			FilterByProp filterCommmand, FilterByProp filterDb, FilterByProp filterUser, FilterByProp filterLevel,
-			Double filterMinDuration, Boolean alarm, String alarmlevel) {
+			Double filterMinDuration, Boolean alarm, String alarmlevel, Boolean pushPg, DataSourceCon ppcon) {
 		this.elasticDir = elasticDir == null ? false : elasticDir;
 		this.econ = econ;
+		this.pushPg = pushPg == null ? false : pushPg;
+		this.ppCon = ppcon;
 		this.path = path;
 		this.cluster = cluster;
 		this.port = port;
@@ -67,11 +72,6 @@ public class ConfDir implements ElasticConf{
 		return path;
 	}
 
-	@Override
-	public String toString() {
-		return "ConfDir [path=" + path + ", cluster=" + cluster + ", port=" + port + "]";
-	}
-
 	public String getCluster() {
 		return cluster;
 	}
@@ -84,7 +84,7 @@ public class ConfDir implements ElasticConf{
 		return elasticExpireDays;
 	}
 
-	public ElasticCon getEcon() {
+	public DataSourceCon getEcon() {
 		return econ;
 	}
 
@@ -176,4 +176,28 @@ public class ConfDir implements ElasticConf{
 	public String getAlarmLevel() {
 		return alarmLevel;
 	}
+
+	public boolean isPushPg() {
+		return pushPg;
+	}
+
+	
+
+	public DataSourceCon getPpCon() {
+		return ppCon;
+	}
+
+	@Override
+	public String toString() {
+		return "ConfDir [path=" + path + ", cluster=" + cluster + ", port=" + port + ", elasticExpireDays="
+				+ elasticExpireDays + ", econ=" + econ + ", noZip=" + noZip + ", noCopy=" + noCopy
+				+ ", letLogStayInMins=" + letLogStayInMins + ", hourlyGzipTimeoutInMins=" + hourlyGzipTimeoutInMins
+				+ ", hourlyStoreTimeoutInMins=" + hourlyStoreTimeoutInMins + ", storeMethod=" + storeMethod
+				+ ", storeHost=" + storeHost + ", storePath=" + storePath + ", filterCommand=" + filterCommand
+				+ ", filterDb=" + filterDb + ", filterUser=" + filterUser + ", filterLevel=" + filterLevel
+				+ ", filterMinDuration=" + filterMinDuration + ", elasticDir=" + elasticDir + ", alarm=" + alarm
+				+ ", alarmLevel=" + alarmLevel + ", pushPg=" + pushPg + ", ppCon=" + ppCon + "]";
+	}
+
+	
 }

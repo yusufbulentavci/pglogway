@@ -19,7 +19,7 @@ import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.Patch;
 
 import pglogway.ConfDir;
-import pglogway.ElasticCon;
+import pglogway.DataSourceCon;
 import pglogway.ExtraFileUtils;
 import pglogway.LogDir;
 import pglogway.Main;
@@ -33,10 +33,10 @@ public class TailTest extends ScenarioTest {
 	@BeforeClass
 	public static void kur() {
 		Main.testing = true;
-		ElasticCon econ=new ElasticCon("localhost", "9200", "euser", "epwd", 1000);
+		DataSourceCon econ=new DataSourceCon("localhost", "9200", "euser", "epwd", 1000);
 		confDir=new ConfDir(true, econ, "/tmp/tail", "mycluster", "5433", 5, new HourList(), new HourList(), 0, 0, 0,
 				null, null, null,
-				null,null,null,null,null, false, "WARN");
+				null,null,null,null,null, false, "WARN", false, null);
 	}
 
 

@@ -1,13 +1,13 @@
 package pglogway;
 
-public class ElasticCon {
+public class DataSourceCon {
 	private final String host;
 	private final String port;
 	private final String user;
 	private final String pwd;
 	private final int sentLimit;
 
-	public ElasticCon(String elasticHost, String elasticPort, String elasticUser, String elasticPwd, int elasticSentLimit) {
+	public DataSourceCon(String elasticHost, String elasticPort, String elasticUser, String elasticPwd, int elasticSentLimit) {
 		this.host=elasticHost;
 		this.port=elasticPort;
 		this.user=elasticUser;
@@ -37,6 +37,12 @@ public class ElasticCon {
 
 	public int getSentLimit() {
 		return sentLimit;
+	}
+
+	@Override
+	public String toString() {
+		return "DataSourceCon [host=" + host + ", port=" + port + ", user=" + user + ", pwd=" + pwd + ", sentLimit="
+				+ sentLimit + "]";
 	}
 
 }

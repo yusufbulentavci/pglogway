@@ -27,7 +27,16 @@ public class Ini {
 		String elasticPort = this.file.getString("global", "elasticport", "9200");
 		String elasticUser = this.file.getString("global", "elasticuser", null);
 		String elasticPwd = this.file.getString("global", "elasticpwd", null);
-		int elasticSentLimit = this.file.getInt("global", "elasticmaxsentperconnectionfile", 10000);
+		int elasticSentLimit = this.file.getInt("global", "elasticmaxsentperconnectionfile", Integer.MAX_VALUE);
+		DataSourceCon econ = new DataSourceCon(elasticHost, elasticPort, elasticUser, elasticPwd, elasticSentLimit);
+		
+		Boolean pushPg = this.file.getBoolean("global", "pushpg", null);
+		String pushPgHost = this.file.getString("global", "pushpg_host", "localhost");
+		String pushPgPort = this.file.getString("global", "pushpg_port", "5432");
+		String pushPgUser = this.file.getString("global", "pushpg_user", null);
+		String pushPgPwd = this.file.getString("global", "pushpg_pwd", null);
+		int pushPgSentLimit = this.file.getInt("global", "pushpg_maxsentperconnectionfile", Integer.MAX_VALUE);
+		DataSourceCon ppcon = new DataSourceCon(pushPgHost, pushPgPort, pushPgUser, pushPgPwd, pushPgSentLimit);
 		
 
 		String noziphours = this.file.getString("global", "noziphours", null);
@@ -51,7 +60,6 @@ public class Ini {
 
 		Double filterminduration = this.file.getDouble("global", "filterminduration", null);
 
-		ElasticCon econ = new ElasticCon(elasticHost, elasticPort, elasticUser, elasticPwd, elasticSentLimit);
 
 		for (int i = 0; i < 100; i++) {
 			String section = "dir-" + i;
@@ -115,7 +123,7 @@ public class Ini {
 
 			ConfDir cd = new ConfDir(elasticDir, econ, path, cluster, port, dirExpireDays, snozip, snocopu, sletLogStayInMins,
 					shourlyGzipTimeoutInMins, shourlyStoreTimeoutInMins, sstoremethod, sstorehost, sstorepath,
-					cfiltercommand, cfilterdb, cfilteruser, cfilterlevel, sfilterminduration, alarm, alarmlevel);
+					cfiltercommand, cfilterdb, cfilteruser, cfilterlevel, sfilterminduration, alarm, alarmlevel, pushPg, ppcon);
 
 			String[] ms = new String[] { "ssh", "remove" };
 			if (cd.getStoreMethod() == null || !Arrays.stream(ms).anyMatch(x -> x.equals(cd.getStoreMethod()))) {

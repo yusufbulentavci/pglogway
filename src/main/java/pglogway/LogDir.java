@@ -44,6 +44,8 @@ public class LogDir implements Runnable {
 
 	private int historicElasticPushed = 0;
 
+	private int historicPgPushed;
+
 	public void report() {
 		StringBuilder sb = new StringBuilder("Report for directory:");
 		sb.append(logDir.getAbsolutePath());
@@ -55,6 +57,8 @@ public class LogDir implements Runnable {
 		sb.append(historicCsvLines);
 		sb.append(" ElasticPushed:");
 		sb.append(this.historicElasticPushed);
+		sb.append(" PgPushed:");
+		sb.append(this.historicPgPushed);
 		if (historicCsvLines != 0) {
 			sb.append(" PushElimination(MergeOrFilter)Ratio:");
 			sb.append((this.historicCsvLines - this.historicElasticPushed) / this.historicCsvLines);
@@ -70,6 +74,11 @@ public class LogDir implements Runnable {
 		this.switchFileCount = switchFileCount;
 		this.sleepForTailCount = sleepForTailCount;
 		status = "Init";
+		
+		if(logger.isDebugEnabled()) {
+			logger.debug("configured directory:");
+			logger.debug(this.toString());
+		}
 	}
 
 //	protected LogDir(String string, int switchFileCount2, int sleepForTailCount2) {
@@ -93,7 +102,7 @@ public class LogDir implements Runnable {
 				}
 				continue;
 			}
-			if (this.confDir.getElasticDir() || this.confDir.getAlarm()) {
+			if (this.confDir.isPushPg() || this.confDir.getElasticDir() || this.confDir.getAlarm()) {
 				if (processCsvFileName != null) {
 					status = "processing:" + processCsvFileName;
 
@@ -256,6 +265,7 @@ public class LogDir implements Runnable {
 		if (this.logFile != null) {
 			this.historicCsvLines += this.logFile.csvLine;
 			this.historicElasticPushed += this.logFile.getElasticPushed();
+			this.historicPgPushed += this.logFile.getPgPushed();
 		}
 		this.logFile = logFile;
 	}
