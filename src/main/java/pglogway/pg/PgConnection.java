@@ -1,4 +1,4 @@
-package pglogway;
+package pglogway.pg;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -7,6 +7,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import pglogway.LogLine;
+import pglogway.LogWriter;
+import pglogway.exceptions.FlushException;
 
 public class PgConnection {
 	static final Logger logger = LogManager.getLogger(PgConnection.class.getName());
@@ -21,7 +25,7 @@ public class PgConnection {
 	Long vTransactionId = null;
 
 	LogWriter logWriter;
-	String sessionId;
+	public String sessionId;
 	int virtualSessionId = 0;
 	int sessionCount;
 	long line;
@@ -44,7 +48,7 @@ public class PgConnection {
 
 	AtomicInteger sentLogCount = new AtomicInteger();
 
-	public void process(LogLine ll) {
+	public void process(LogLine ll) throws FlushException {
 		ll.virtual_session_id = this.virtualSessionId;
 
 		if (ll.virtual_transaction_id != null) {
@@ -64,6 +68,10 @@ public class PgConnection {
 				return;
 			}
 
+			if (ll.detail != null && ll.detail.startsWith("parameters:")) {
+				bindDetail = ll.detail.substring("parameters:".length() + 1);
+			}
+			
 			if (ll.command_tag.equals("PARSE")) {
 //				this.parse = ll;
 				this.parseDur = ll.getDuration();
@@ -71,14 +79,13 @@ public class PgConnection {
 				return;
 			} else if (ll.command_tag.equals("BIND")) {
 //				this.bind = ll;
-				if (ll.detail != null && ll.detail.startsWith("parameters:")) {
-					bindDetail = ll.detail.substring("parameters:".length() + 1);
-				}
 				this.bindDur = ll.getDuration();
 				this.bastirilan.add(ll);
 //				this.bindDetail = ll.detail;
 				return;
 			}
+			
+			
 
 			if (ll.message != null) {
 				if (ll.isStatement()) {
@@ -110,7 +117,7 @@ public class PgConnection {
 		writeLog(ll, true);
 	}
 
-	public void resetPbcc(boolean suc) {
+	public void resetPbcc(boolean suc) throws FlushException {
 		this.waitDuration = false;
 
 		if (suc || statement != null) {
@@ -128,7 +135,7 @@ public class PgConnection {
 			this.bastirilan.clear();
 	}
 
-	private void writeLog(LogLine logLine, boolean canBeFiltered) {
+	private void writeLog(LogLine logLine, boolean canBeFiltered) throws FlushException {
 		logWriter.write(logLine, canBeFiltered, sentLogCount);
 	}
 

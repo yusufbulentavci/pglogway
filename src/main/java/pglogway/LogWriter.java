@@ -3,6 +3,7 @@ package pglogway;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -10,7 +11,14 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class LogWriter {
+import pglogway.elastic.ElasticPush;
+import pglogway.exceptions.CantFindNextDayException;
+import pglogway.exceptions.ConfigException;
+import pglogway.exceptions.FlushException;
+import pglogway.exceptions.UnexpectedSituationException;
+import pglogway.pg.PgPush;
+
+public class LogWriter implements AutoCloseable{
 	static final Logger logger = LogManager.getLogger(LogWriter.class.getName());
 
 	final File file;
@@ -36,7 +44,7 @@ public class LogWriter {
 
 	private final ConfDir confDir;
 
-	public LogWriter(File dir, String jsonFileName, String csvFileName, ConfDir confDir) {
+	public LogWriter(File dir, String jsonFileName, String csvFileName, ConfDir confDir) throws ConfigException, UnexpectedSituationException, UnknownHostException, CantFindNextDayException {
 		this.jsonFileName = jsonFileName;
 		this.file = new File(dir, jsonFileName);
 		this.csvFileName = csvFileName;
@@ -94,7 +102,7 @@ public class LogWriter {
 					this.pgPush.connect();
 			}
 		} else {
-			throw new RuntimeException("Unexpected file name, should be start with postgres-:" + csvFileName);
+			throw new UnexpectedSituationException("Unexpected file name, should be start with postgres-:" + csvFileName);
 		}
 
 		String date = csvFileName.substring(11, 21);
@@ -144,7 +152,7 @@ public class LogWriter {
 //		}
 //	}
 
-	public void write(LogLine ll, boolean canBeFiltered, AtomicInteger sentLogCount) {
+	public void write(LogLine ll, boolean canBeFiltered, AtomicInteger sentLogCount) throws FlushException {
 //		logger.info(ll.toJson(fn).toString());
 		if (this.alarm != null) {
 			this.alarm.check(ll);
@@ -227,31 +235,13 @@ public class LogWriter {
 		return false;
 	}
 
-	public void close() {
-		logger.info("LogFile close:" + csvFile);
-
-		if (!Main.testing) {
-			if (this.elasticPush != null)
-				this.elasticPush.close();
-			if (this.pgPush != null)
-				this.pgPush.close();
-		}
-		if (Main.testing) {
-			try {
-				this.fileWriter.close();
-			} catch (IOException e) {
-				logger.error("Failed logfile done; file:" + csvFile.getPath(), e);
-			}
-		}
-
-	}
-
+	
 	public void done() {
 		this.csvFile.renameTo(csvFileDone);
 		logger.info("LogFile done/renamed:" + csvFile);
 	}
 
-	public void beforeSleeping() {
+	public void beforeSleeping() throws FlushException {
 		if (!Main.testing) {
 			if (this.elasticPush != null)
 				this.elasticPush.flush();
@@ -278,6 +268,25 @@ public class LogWriter {
 		if (this.pgPush == null)
 			return 0;
 		return this.pgPush.getPushed();
+	}
+
+	public void close() {
+		logger.info("LogFile close:" + csvFile);
+
+		if (!Main.testing) {
+			if (this.elasticPush != null)
+				this.elasticPush.close();
+			if (this.pgPush != null)
+				this.pgPush.close();
+		}
+		if (Main.testing) {
+			try {
+				this.fileWriter.close();
+			} catch (IOException e) {
+				logger.error("Failed logfile done; file:" + csvFile.getPath(), e);
+			}
+		}
+
 	}
 
 }

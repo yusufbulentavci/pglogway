@@ -1,17 +1,19 @@
-package pglogway;
+package pglogway.logdir;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import pglogway.exceptions.LogDirParsingException;
+
 public class LogParser {
 
 	static final Logger logger = LogManager.getLogger(LogParser.class);
 	
-	public static String[] parse(InputStreamReader is) {
+	public static String[] parse(BufferedReader is) throws LogDirParsingException {
 		String[] ret = new String[30];
 		int iret = 0;
 
@@ -63,7 +65,7 @@ public class LogParser {
 
 					if (sb.length() > 0) {
 						if (iret >= ret.length) {
-							throw new RuntimeException(
+							throw new LogDirParsingException(
 									"Unexpected long csv:" + sb.toString() + " Csv:" + Arrays.toString(ret));
 						}
 						ret[iret] = sb.toString();
@@ -83,14 +85,14 @@ public class LogParser {
 					}
 				} else {
 					if (sb.length() > 80000) {
-						throw new RuntimeException("Too long csv item:" + sb.toString());
+						throw new LogDirParsingException("Too long csv item:" + sb.toString());
 					}
 					sb.append(c);
 				}
 			} while (true);
 		} catch (IOException e) {
 			logger.error("Parsing error", e);
-			return null;
+			throw new LogDirParsingException("Too long csv item:" + sb.toString(), e);
 
 		}
 

@@ -10,6 +10,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import pglogway.logdir.LogDirMainWorker;
+
 public class NoElasticTest extends ScenarioTest {
 	
 	private static ConfDir confDir;
@@ -33,7 +35,7 @@ public class NoElasticTest extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(new URL(ExtraFileUtils.class.getResource("/scenarios/noelastic").toString()),
 				new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 1, 1);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 1, 1);
 
 		
 		

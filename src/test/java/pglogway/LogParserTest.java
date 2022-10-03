@@ -1,30 +1,20 @@
 package pglogway;
 
-import static org.junit.Assert.assertTrue;
-
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.net.URL;
 import java.nio.channels.Channels;
-import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.github.difflib.DiffUtils;
-import com.github.difflib.patch.AbstractDelta;
-import com.github.difflib.patch.Patch;
-
-import pglogway.ConfDir;
-import pglogway.DataSourceCon;
-import pglogway.ExtraFileUtils;
-import pglogway.LogDir;
-import pglogway.Main;
+import pglogway.exceptions.LogDirParsingException;
+import pglogway.logdir.LogParser;
 
 public class LogParserTest extends ScenarioTest {
 
@@ -39,7 +29,7 @@ public class LogParserTest extends ScenarioTest {
 	}
 
 	@Test
-	public void denebakalim() throws IOException {
+	public void denebakalim() throws IOException, LogDirParsingException {
 		File dir = new File("/tmp/logparser");
 		FileUtils.deleteDirectory(dir);
 		dir.mkdir();
@@ -48,7 +38,7 @@ public class LogParserTest extends ScenarioTest {
 
 		RandomAccessFile raf = new RandomAccessFile(new File(dir, "postgresql-2021-02-08_10_31_38.csv"), "r");
 
-		InputStreamReader is = new InputStreamReader(Channels.newInputStream(raf.getChannel()));
+		BufferedReader is = new BufferedReader(new InputStreamReader(Channels.newInputStream(raf.getChannel())));
 
 		String[] d;
 		do {

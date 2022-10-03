@@ -20,8 +20,8 @@ import com.github.difflib.patch.Patch;
 import pglogway.ConfDir;
 import pglogway.DataSourceCon;
 import pglogway.ExtraFileUtils;
-import pglogway.LogDir;
 import pglogway.Main;
+import pglogway.logdir.LogDirMainWorker;
 
 @Ignore
 public class RolloverTest extends ScenarioTest {
@@ -47,7 +47,7 @@ public class RolloverTest extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(new URL(ExtraFileUtils.class.getResource("/scenarios/rollover").toString()),
 				new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 1, 1);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 1, 1);
 
 		new Thread(new Runnable() {
 

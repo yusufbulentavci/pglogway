@@ -27,6 +27,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import pglogway.exceptions.ChOwnFailedException;
+
 public class ExtraFileUtils {
 	static final Logger logger = LogManager.getLogger(ExtraFileUtils.class.getName());
 	public static boolean copyFile(final File toCopy, final File destFile) {
@@ -135,7 +137,7 @@ public class ExtraFileUtils {
 //		copyResourcesRecursively(new URL(FileUtils.class.getResource("/csv").toString()), new File("/tmp"));
 	}
 	
-	public static void chown(String f, String usr, String grp) {
+	public static void chown(String f, String usr, String grp) throws ChOwnFailedException {
 		Path p = new File(f).toPath();
 		try {
 			UserPrincipalLookupService lookupService = FileSystems.getDefault().getUserPrincipalLookupService();
@@ -145,8 +147,7 @@ public class ExtraFileUtils {
 			Files.getFileAttributeView(p, PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS).setGroup(group);
 		} catch (IOException e) {
 			logger.error("Failed to chwon:"+f, e);
-			Main.fatal();
-			throw new RuntimeException(e);
+			throw new ChOwnFailedException("Failed to chwon:"+f, e);
 		}
 	}
 }

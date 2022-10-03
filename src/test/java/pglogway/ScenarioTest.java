@@ -28,7 +28,7 @@ public class ScenarioTest {
 	}
 
 	
-	void defaultControl(String dir, String file) throws IOException {
+	public void defaultControl(String dir, String file) throws IOException {
 		List<String> original = Files
 				.readAllLines(new File(dir+file+".json").toPath());
 		List<String> revised = Files

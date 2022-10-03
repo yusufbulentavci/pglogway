@@ -9,6 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import pglogway.logdir.LogDirMainWorker;
+
 @Ignore
 public class CsvMultilineTest extends ScenarioTest {
 	
@@ -31,7 +33,7 @@ public class CsvMultilineTest extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(
 				new URL(ExtraFileUtils.class.getResource("/scenarios/csvmultiline").toString()), new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 0, 0);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 0, 0);
 		ld.run();
 
 		defaultControl("/tmp/csvmultiline/", "postgresql-2021-02-08_10_31_38.csv");

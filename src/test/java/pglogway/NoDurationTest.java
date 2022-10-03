@@ -20,8 +20,8 @@ import com.github.difflib.patch.Patch;
 import pglogway.ConfDir;
 import pglogway.DataSourceCon;
 import pglogway.ExtraFileUtils;
-import pglogway.LogDir;
 import pglogway.Main;
+import pglogway.logdir.LogDirMainWorker;
 
 @Ignore
 public class NoDurationTest extends ScenarioTest {
@@ -45,7 +45,7 @@ public class NoDurationTest extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(
 				new URL(ExtraFileUtils.class.getResource("/scenarios/noduration").toString()), new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 0, 0);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 0, 0);
 		ld.run();
 
 		List<String> original = Files

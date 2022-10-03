@@ -1,4 +1,6 @@
-package pglogway;
+package pglogway.elastic;
+
+import pglogway.DataSourceCon;
 
 public interface ElasticConf {
 

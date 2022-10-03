@@ -12,10 +12,12 @@ import java.util.zip.GZIPOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import pglogway.exceptions.GzipFailedException;
+
 public class Gzip {
 	static final Logger logger = LogManager.getLogger(Gzip.class);
 
-	public int compressFiles(File directory, int timeoutMins, int letItStayMins, boolean dontCopy) {
+	public int compressFiles(File directory, int timeoutMins, int letItStayMins, boolean dontCopy) throws GzipFailedException {
 		File[] files = directory.listFiles(new FilenameFilter() {
 
 			@Override
@@ -52,7 +54,7 @@ public class Gzip {
 				done++;
 			}
 			
-			if (compressGzipFile(file)) {
+			if (file.exists() && compressGzipFile(file)) {
 				done++;
 			}
 			
@@ -65,7 +67,7 @@ public class Gzip {
 		return done;
 	}
 
-	private boolean compressGzipFile(File file) {
+	private boolean compressGzipFile(File file) throws GzipFailedException {
 		File source = file;
 		File target = new File(file.getAbsolutePath() + ".gz");
 
@@ -86,8 +88,7 @@ public class Gzip {
 			return true;
 		} catch (IOException e) {
 			logger.error("Failed to zip file:" + file.getAbsolutePath(), e);
-			Main.fatal();
-			return false;
+			throw new GzipFailedException("Failed to zip file:" + file.getAbsolutePath(), e);
 		}
 	}
 

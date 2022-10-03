@@ -1,7 +1,8 @@
-package pglogway;
+package pglogway.elastic;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 import java.util.Calendar;
 
 import org.apache.commons.io.IOUtils;
@@ -31,6 +32,9 @@ import co.elastic.clients.elasticsearch.core.BulkRequest.Builder;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
+import pglogway.ConfDir;
+import pglogway.LogLine;
+import pglogway.Main;
 
 // https://www.elastic.co/guide/en/elasticsearch/client/java-rest/current/java-rest-low-usage-requests.html
 /*
@@ -99,7 +103,8 @@ public class ElasticPush {
 //		ep.flush();
 //	}
 
-	public ElasticPush(ElasticConf confDir, String year, String month, String day, int hour) {
+	public ElasticPush(ElasticConf confDir, String year, String month, String day, int hour)
+			throws UnknownHostException {
 		this.confDir = confDir;
 		this.indexNameWoDate = "pg" + confDir.getCluster() + "_" + ConfDir.getHostName() + "_"
 				+ (confDir.getPort().equals("5432") ? "" : confDir.getPort()) + "_";
@@ -244,7 +249,8 @@ public class ElasticPush {
 		} catch (IOException er) {
 			logger.error("createIndex", er);
 			close();
-			Main.fatal();
+			// TODO:
+			// Main.fatal();
 			throw new RuntimeException("Index couldnt be created:" + indexName, er);
 		}
 	}
@@ -256,7 +262,8 @@ public class ElasticPush {
 				restClient.close();
 			} catch (IOException e) {
 				logger.error("close", e);
-				Main.fatal();
+				// TODO:
+				// Main.fatal();
 			}
 		}
 	}
@@ -277,6 +284,7 @@ public class ElasticPush {
 	}
 
 	ObjectMapper mapper = new ObjectMapper();
+
 	private String toJacksonString(LogLine ll) {
 		try {
 			return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ll);
@@ -295,12 +303,10 @@ public class ElasticPush {
 			esClient.bulk(bulkRequest.build());
 		} catch (IOException e) {
 			logger.error("flush", e);
-			Main.fatal();
-			try {
-				logger.error("Sleeping for a minute after error");
-				Thread.sleep(60000);
-			} catch (InterruptedException e1) {
-			}
+			// TODO:
+			// Main.fatal();
+			logger.error("Sleeping for a minute after error");
+			Main.sleep("Elastic flush io error", 60000);
 		} finally {
 			bulkRequest = null;
 		}

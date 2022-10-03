@@ -1,12 +1,14 @@
 package pglogway;
 
 import java.math.BigDecimal;
+import java.net.UnknownHostException;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -21,67 +23,67 @@ public class LogLine {
 	static final Logger logger = LogManager.getLogger(LogLine.class.getName());
 
 	@JsonGetter("host.name")
-	public String getHostName() {
+	public String getHostName() throws UnknownHostException {
 		return ConfDir.getHostName();
 	}
 
-	Long log_time;
+	public Long log_time;
 
 	@JsonGetter("@timestamp")
 	public Long getTimestamp() {
 		return log_time;
 	}
 
-	String user_name;
+	public String user_name;
 
 	@JsonGetter("postgresql.log.user")
 	public String getUserName() {
 		return user_name;
 	}
 
-	String database_name;
+	public String database_name;
 
 	@JsonGetter("postgresql.log.database")
 	public String getDatabaseName() {
 		return database_name;
 	}
 
-	final Integer pgPort;
+	public final Integer pgPort;
 
 	@JsonGetter("postgresql.log.port")
 	public Integer getPort() {
 		return pgPort;
 	}
 
-	Integer locker;
+	public Integer locker;
 
 	@JsonGetter("postgresql.log.locker")
 	public Integer getLocker() {
 		return locker;
 	}
 
-	Integer[] locked;
+	public Integer[] locked;
 
 	@JsonGetter("postgresql.log.locked")
 	public Integer[] getLocked() {
 		return locked;
 	}
 
-	Integer process_id;
+	public Integer process_id;
 
 	@JsonGetter("process.pid")
 	public Integer getPid() {
 		return this.process_id;
 	}
 
-	Boolean unix_socket;
+	public Boolean unix_socket;
 
 	@JsonGetter("unix_socket")
 	public Boolean getUnixSocket() {
 		return this.unix_socket;
 	}
 
-	String connection_from;
+	public String connection_from;
 
 	@JsonGetter("client.ip")
 	public String getConnectionFrom() {
@@ -95,126 +97,126 @@ public class LogLine {
 		return connection_from_port;
 	}
 
-	String session_id;
+	public String session_id;
 
 	@JsonGetter("session_id")
 	public String getSession_id() {
 		return session_id;
 	}
 
-	Long session_line_num;
+	public Long session_line_num;
 
 	@JsonGetter("session_line_num")
 	public Long getSessionLineNum() {
 		return this.session_line_num;
 	}
 
-	String command_tag; // BEGIN, SET, COMMIT, PARSE, DISCARD ALL, SELECT, UPDATE, INSERT, idle
+	public String command_tag; // BEGIN, SET, COMMIT, PARSE, DISCARD ALL, SELECT, UPDATE, INSERT, idle
 
 	@JsonGetter("command_tag")
 	public String getCommand_tag() {
 		return command_tag;
 	}
 
-	Long session_start_time;
+	public Long session_start_time;
 
 	@JsonGetter("session_start_time")
 	public Long getSession_start_time() {
 		return session_start_time;
 	}
 
-	Long transaction_id;
+	public Long transaction_id;
 
 	@JsonGetter("transaction_id")
 	public Long getTransaction_id() {
 		return transaction_id;
 	}
 
-	Long virtual_transaction_id;
+	public Long virtual_transaction_id;
 
 	@JsonGetter("virtual_transaction_id")
 	public Long getVirtual_transaction_id() {
 		return virtual_transaction_id;
 	}
 
-	String error_severity; // DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, FATAL, PANIC, ???
+	public String error_severity; // DEBUG, LOG, INFO, NOTICE, WARNING, ERROR, FATAL, PANIC, ???
 
 	@JsonGetter("postgresql.log.level")
 	public String getError_severity() {
 		return error_severity;
 	}
 
-	String sql_state_code;
+	public String sql_state_code;
 
 	@JsonGetter("sql_state_code")
 	public String getSql_state_code() {
 		return sql_state_code;
 	}
 
-	String message;
+	public String message;
 
 	@JsonGetter("postgresql.log.message")
 	public String message() {
 		return message;
 	}
 
-	String detail;
+	public String detail;
 
 	@JsonGetter("detail")
 	public String detail() {
 		return detail;
 	}
 
-	String hint;
+	public String hint;
 
 	@JsonGetter("hint")
 	public String hint() {
 		return hint;
 	}
 
-	String internal_query;
+	public String internal_query;
 
 	@JsonGetter("internal_query")
 	public String internal_query() {
 		return internal_query;
 	}
 
-	Integer internal_query_pos;
+	public Integer internal_query_pos;
 
 	@JsonGetter("internal_query_pos")
 	public Integer getInternal_query_pos() {
 		return internal_query_pos;
 	}
 
-	String context;
+	public String context;
 
 	@JsonGetter("context")
 	public String getcontext() {
 		return context;
 	}
 
-	String query;
+	public String query;
 
 	@JsonGetter("query")
 	public String getquery() {
 		return query;
 	}
 
-	Integer query_pos;
+	public Integer query_pos;
 
 	@JsonGetter("query_pos")
 	public Integer getquery_pos() {
 		return query_pos;
 	}
 
-	String location;
+	public String location;
 
 	@JsonGetter("location")
 	public String getlocation() {
 		return location;
 	}
 
-	String application_name;
+	public String application_name;
 
 	@JsonGetter("application_name")
 	public String getapplication_name() {
@@ -248,14 +250,14 @@ public class LogLine {
 		return parseDur.doubleValue();
 	}
 
-	String bindDetail;
+	public String bindDetail;
 
 	@JsonGetter("parameters")
 	public String getbindDetail() {
 		return bindDetail;
 	}
 
-	Integer virtual_session_id;
+	public Integer virtual_session_id;
 
 	@JsonGetter("virtual_session_id")
 	public Integer getvirtual_session_id() {
@@ -271,14 +273,14 @@ public class LogLine {
 		return tempUsage / (1024 * 1024);
 	}
 
-	Integer csvInd;
+	public Integer csvInd;
 
 	@JsonGetter("csv_ind")
 	public Integer getcsvInd() {
 		return csvInd;
 	}
 
-	String csv;
+	public String csv;
 
 	@JsonGetter("csv")
 	public String getcsv() {
@@ -289,7 +291,7 @@ public class LogLine {
 
 	private boolean isStatement = false;
 
-	Integer query_hash;
+	public Integer query_hash;
 	@JsonGetter("query_hash")
 	public Integer getQuery_hash() {
 		return this.query_hash;
@@ -564,7 +566,7 @@ public class LogLine {
 		p.put("@timestamp", new JSONObject().put("type", "date").put("format", "YYYY-MM-ddTHH:mm:ss.SSSZ"));
 	}
 
-	JSONObject toJson(String fileName) {
+	JSONObject toJson(String fileName) throws JSONException, UnknownHostException {
 		JSONObject ret = new JSONObject();
 
 		ret.put("host.name", ConfDir.getHostName());

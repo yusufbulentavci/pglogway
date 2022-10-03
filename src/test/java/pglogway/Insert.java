@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import pglogway.logdir.LogDirMainWorker;
+
 /*
  * Base test 
  */
@@ -33,7 +35,7 @@ public class Insert extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(
 				new URL(ExtraFileUtils.class.getResource("/scenarios/insert").toString()), new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 0, 0);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 0, 0);
 		ld.run();
 
 		defaultControl("/tmp/insert/","postgresql-2021-02-08_10_31_38.csv");

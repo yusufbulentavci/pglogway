@@ -1,9 +1,10 @@
-package pglogway;
+package pglogway.logdir;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,9 +15,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.nbug.hexprobe.server.telnet.EasyTerminal;
+import pglogway.ConfDir;
+import pglogway.Gzip;
+import pglogway.Main;
+import pglogway.Store;
+import pglogway.exceptions.CantFindNextDayException;
+import pglogway.exceptions.ConfigException;
+import pglogway.exceptions.FlushException;
+import pglogway.exceptions.GzipFailedException;
+import pglogway.exceptions.LogDirIoException;
+import pglogway.exceptions.LogDirTailException;
+import pglogway.exceptions.ScpFailedException;
+import pglogway.exceptions.UnexpectedSituationException;
 
-public class LogDir implements Runnable {
-	static final Logger logger = LogManager.getLogger(LogDir.class.getName());
+public class LogDirMainWorker implements Runnable, DirState {
+	static final Logger logger = LogManager.getLogger(LogDirMainWorker.class.getName());
 
 	File logDir;
 	Set<String> commandTags = new HashSet<String>();
@@ -68,61 +81,59 @@ public class LogDir implements Runnable {
 		logger.info(sb.toString());
 	}
 
-	public LogDir(ConfDir dir, int switchFileCount, int sleepForTailCount) {
+	public LogDirMainWorker(ConfDir dir, int switchFileCount, int sleepForTailCount) {
 		this.confDir = dir;
 		logDir = new File(dir.getPath());
 		this.switchFileCount = switchFileCount;
 		this.sleepForTailCount = sleepForTailCount;
 		status = "Init";
-		
-		if(logger.isDebugEnabled()) {
+
+		if (logger.isDebugEnabled()) {
 			logger.debug("configured directory:");
 			logger.debug(this.toString());
 		}
 	}
 
-//	protected LogDir(String string, int switchFileCount2, int sleepForTailCount2) {
-//		this(new ConfDir(string), switchFileCount2, sleepForTailCount2);
-//	}
-
 	@Override
 	public void run() {
 		logger.info("Starting:" + confDir);
-		while (this.alive) {
-			if (!switchFile(true, false)) {
-				if (switchFileCount != -1 && switchFileCount == 0) {
-					logger.info("Dont wait, leaving...." + this.switchFileCount);
-					break;
-				}
+		try {
+			while (this.alive) {
+				if (!runSwitchFile(true, false)) {
+					if (switchFileCount != -1 && switchFileCount == 0) {
+						logger.info("Dont wait, leaving...." + this.switchFileCount);
+						break;
+					}
 
-				try {
 					status = "waiting csv file";
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
+					Main.sleep("Mainloop waiting csv file", 2000);
+					continue;
 				}
-				continue;
-			}
-			if (this.confDir.isPushPg() || this.confDir.getElasticDir() || this.confDir.getAlarm()) {
-				if (processCsvFileName != null) {
-					status = "processing:" + processCsvFileName;
-
-					logger.info("Working on:" + processCsvFileName);
-					setLogFile(new LogFile(logDir, processCsvFileName, sleepForTailCount, confDir));
-					this.logFile.process(new DirState() {
-
-						@Override
-						public boolean checkRollover() {
-							return LogDir.this.switchFile(false, logFile.error);
-						}
-					});
-					logger.info("Ends working on:" + processCsvFileName);
+				if (this.confDir.isPushPg() || this.confDir.getElasticDir() || this.confDir.getAlarm()) {
+					if (processCsvFileName != null) {
+						status = "processing:" + processCsvFileName;
+						logger.info("Working on:" + processCsvFileName);
+						setLogFile(new LogFile(logDir, processCsvFileName, sleepForTailCount, confDir));
+						this.logFile.runProcessTheFile(this);
+						logger.info("Ends working on:" + processCsvFileName);
+					}
 				}
 			}
+			logger.info("Logdir terminating gracefully:" + this.confDir);
+		} catch (LogDirTailException | LogDirCanNotAccessDirectory | LogDirIoException | UnknownHostException
+				| ConfigException | UnexpectedSituationException | CantFindNextDayException | FlushException e) {
+			logger.error("Exception in :" + confDir + " Exiting", e);
+			Main.sonlan();
+//			Main.fatal();
 		}
-		logger.info("Logdir terminating gracefully:" + this.confDir);
 	}
 
-	public boolean switchFile(boolean makeChange, boolean error) {
+	@Override
+	public boolean checkRollover() throws LogDirCanNotAccessDirectory {
+		return runSwitchFile(false, logFile.error);
+	}
+
+	public boolean runSwitchFile(boolean makeChange, boolean error) throws LogDirCanNotAccessDirectory {
 		String[] allCsvs = logDir.list(new FilenameFilter() {
 			@Override
 			public boolean accept(File dir, String name) {
@@ -133,15 +144,12 @@ public class LogDir implements Runnable {
 					return false;
 				}
 				return true;
-//				File json = new File(dir, name + ".json");
-//				return !json.exists();
 			}
 		});
 
 		if (allCsvs == null) {
 			logger.error("Access problem to directory:" + logDir.getAbsolutePath());
-			System.exit(10);
-			return false;
+			throw new LogDirCanNotAccessDirectory("Access problem to directory:" + logDir.getAbsolutePath());
 		}
 
 		List<String> csvs = new ArrayList<String>();
@@ -184,21 +192,21 @@ public class LogDir implements Runnable {
 	public void status(EasyTerminal terminal) throws IOException {
 		terminal.writeLine("LogDir:" + this.confDir);
 		terminal.writeLine(status);
-		if(confDir.isDontCopy()) {
+		if (confDir.isDontCopy()) {
 			terminal.writeLine("Store method is remove or empty. Do not store files");
-		}else {
-			terminal.writeLine("Store method:"+confDir.getStoreMethod());
+		} else {
+			terminal.writeLine("Store method:" + confDir.getStoreMethod());
 		}
-		
-		terminal.writeLine("NoCopy hours:"+confDir.getNoCopy().toString());
-		terminal.writeLine("NoZip hours:"+confDir.getNoZip().toString());
-		
+
+		terminal.writeLine("NoCopy hours:" + confDir.getNoCopy().toString());
+		terminal.writeLine("NoZip hours:" + confDir.getNoZip().toString());
+
 		if (logFile != null) {
 			logFile.status(terminal);
 		}
 	}
 
-	public void maintain(int hour) {
+	public void maintain(int hour) throws GzipFailedException, ScpFailedException, UnknownHostException {
 		if (logFile != null) {
 			logFile.maintain(hour);
 		}
@@ -251,7 +259,7 @@ public class LogDir implements Runnable {
 				return f.lastModified() < older && f.length() == 0;
 			}
 		});
-		if(empty == null) {
+		if (empty == null) {
 			return;
 		}
 		for (File file : empty) {

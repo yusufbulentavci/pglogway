@@ -1,6 +1,7 @@
-package pglogway;
+package pglogway.pg;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,15 +9,20 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import pglogway.ConfDir;
+import pglogway.DataSourceCon;
+import pglogway.LogLine;
+import pglogway.exceptions.CantFindNextDayException;
+import pglogway.exceptions.ConfigException;
+import pglogway.exceptions.FlushException;
+import pglogway.exceptions.UnexpectedSituationException;
 
 public class PgPush {
 
@@ -26,18 +32,28 @@ public class PgPush {
 
 	private int pushed = 0;
 	private int sent = 0;
-	private String key;
+	private String defaultTableName;
 	private List<LogLine> bulked = new ArrayList<>();
 	private String insertSql;
 	private String hostname;
 	private String cluster;
+	private String month;
+	private String day;
+	private String year;
+//	private String rangeFrom;
+//	private String rangeTo;
 
-	public PgPush(ConfDir confDir, String year, String month, String day, int hour) {
+	public PgPush(ConfDir confDir, String year, String month, String day, int hour) throws UnknownHostException, CantFindNextDayException {
 		pgCon = confDir.getPpCon();
 		this.hostname = ConfDir.getHostName();
-		this.key = "log_" + hostname + "_" + year + "_" + month + "_" + day;
-		StringBuilder sb = new StringBuilder("insert into " + key + "  values (");
-		for (int i = 0; i < 39; i++)
+		this.month=month;
+		this.day=day;
+		this.year=year;
+		this.defaultTableName = "log_" + year + "_" + month + "_" + day;
+		
+
+		StringBuilder sb = new StringBuilder("insert into pgdaylog values (");
+		for (int i = 0; i < 38; i++)
 			sb.append("?,");
 		sb.append("?)");
 		this.cluster = confDir.getCluster();
@@ -47,12 +63,12 @@ public class PgPush {
 			logger.debug("PgPush is initialized");
 	}
 
-	public void connect() {
+	public void connect() throws ConfigException, UnexpectedSituationException {
 		try {
 			Class dbDriver = Class.forName("org.postgresql.Driver");
 		} catch (ClassNotFoundException e1) {
 			logger.error("Failed to find jdbc driver org.postgresql.Driver", e1);
-			throw new RuntimeException(e1);
+			throw new ConfigException("Failed to find jdbc driver org.postgresql.Driver", e1);
 		}
 		String jdbcUrl = "jdbc:postgresql://" + pgCon.getHost() + ":" + pgCon.getPort() + "/pglogway";
 		if (logger.isDebugEnabled())
@@ -64,17 +80,17 @@ public class PgPush {
 			con.setAutoCommit(false);
 		} catch (SQLException e) {
 			logger.error("Failed to connect " + jdbcUrl, e);
-			throw new RuntimeException(e);
+			throw new ConfigException("Failed to find jdbc driver org.postgresql.Driver", e);
 		}
 	}
 
-	private void createTable() {
+	private void createTable() throws ConfigException, UnexpectedSituationException {
 		if (logger.isDebugEnabled())
 			logger.debug("PgPush create table");
 		if (con == null) {
 			if (logger.isDebugEnabled())
 				logger.debug("PgPush create table/con is null");
-			return;
+			throw new UnexpectedSituationException("PgPush create table/con is null");
 		}
 
 		try {
@@ -84,35 +100,54 @@ public class PgPush {
 			try (PreparedStatement statement = con.prepareStatement(tableSql)) {
 				statement.execute();
 			} catch (SQLException e) {
-				logger.error("Failed to create primary table with:" + tableSql);
-				throw new RuntimeException(e);
+				if(logger.isDebugEnabled()) {
+					logger.debug("Failed to create primary table with:" + tableSql);
+				}
+				//throw new RuntimeException(e);
 			}
 			if (logger.isDebugEnabled())
 				logger.debug("PgPush create table/done");
 		} catch (IOException e1) {
 			logger.error("Failed to read resource table.sql");
-			throw new RuntimeException(e1);
+			throw new ConfigException("Failed to read resource table.sql", e1);
 		}
 
-		if (logger.isDebugEnabled())
-			logger.debug("PgPush create partition table");
-		String sql = "create table if not exists " + key + "  partition of hostdaylog for values in ('" + key + "');";
+		int yi = Integer.parseInt(year);
+		int mi = Integer.parseInt(month);
+		int di = Integer.parseInt(day);
+		LocalDate date = LocalDate.of(yi, mi, di);
+//		LocalDate today = nextDay(year, month, day);
+		
+		createPartition(date.plusDays(-1));
+		createPartition(date);
+		createPartition(date.plusDays(1));
+	}
+
+	private void createPartition(LocalDate d) {
+		String tableName = "log_" + d.getYear() + "_" + d.getMonthValue() + "_" + d.getDayOfMonth();
+		String rangeFrom = d.getYear() + "-" + d.getMonthValue() + "-" + d.getDayOfMonth();
+		LocalDate l=d.plusDays(1);
+		String rangeTo = l.getYear() + "-" + l.getMonthValue() + "-" + l.getDayOfMonth();
+//		if (logger.isDebugEnabled())
+//			logger.debug("PgPush create partition table");
+		String sql = "create unlogged table if not exists " + tableName + " partition of pgdaylog"
+				+ " for values from ('" + rangeFrom + "')" + " to ('" + rangeTo + "');";
 		try (PreparedStatement statement = con.prepareStatement(sql)) {
 			statement.execute();
 			if (logger.isDebugEnabled())
 				logger.debug("PgPush create partition table/done");
 		} catch (SQLException e) {
-			logger.error("Failed to create table with:" + sql);
-			throw new RuntimeException(e);
+			logger.debug("Failed to create table with:" + sql);
+			//throw new RuntimeException(e);
 		}
 	}
 
-	public void push(LogLine ll) {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Pushed:" + ll.toString());
-		}
+	public void push(LogLine ll) throws FlushException {
+//		if (logger.isDebugEnabled()) {
+//			logger.debug("Pushed:" + ll.toString());
+//		}
 		bulked.add(ll);
-		if (bulked.size() > 100) {
+		if (bulked.size() > 10000) {
 			flush();
 		}
 	}
@@ -125,36 +160,49 @@ public class PgPush {
 		}
 	}
 
-	public void flush() {
+	public void flush() throws FlushException {
 		if (logger.isDebugEnabled())
 			logger.debug("PgPush flush");
+		try {
+			con.setAutoCommit(false);
+		} catch (SQLException e1) {
+			logger.error("Failed to set autocommit", e1);
+		}
 		try (PreparedStatement ps = con.prepareStatement(this.insertSql)) {
 			for (LogLine ll : bulked) {
 				fill(ps, ll);
 				ps.addBatch();
 			}
+			if (logger.isDebugEnabled())
+				logger.debug("PgPush flush2");
 			ps.executeBatch();
+			if (logger.isDebugEnabled())
+				logger.debug("PgPush flush3");
 			con.commit();
+			if (logger.isDebugEnabled())
+				logger.debug("PgPush flush4");
 			this.bulked.clear();
+			if (logger.isDebugEnabled())
+				logger.debug("PgPush flush5");
 		} catch (SQLException e) {
 			logger.error("Failed to push to pg", e);
-			throw new RuntimeException(e);
+			throw new FlushException(e);
 		}
+		if (logger.isDebugEnabled())
+			logger.debug("PgPush flush-out");
 	}
 
 	private void fill(PreparedStatement ps, LogLine ll) throws SQLException {
-		// hostday text
-		ps.setString(1, this.key);
-		// host_name text not null,
-		ps.setString(2, this.hostname);
 		// log_time timestamp not null,
-		ps.setTimestamp(3, new java.sql.Timestamp((long) ll.log_time * 1000));
+		ps.setTimestamp(1, new java.sql.Timestamp((long) ll.log_time * 1000));
+		// cluster
+		ps.setString(2, cluster);
+		// host_name text not null,
+		ps.setString(3, this.hostname);
 		// user_name text,
-		if (ll.user_name != null)
-			ps.setString(4, ll.user_name);
+		ps.setString(4, ll.user_name);
 		// db_name text,
-		if (ll.database_name != null)
-			ps.setString(5, ll.database_name);
+		ps.setString(5, ll.database_name);
 		// pg_port int,
 		psSetInt(ps, 6, ll.pgPort);
 
@@ -230,8 +278,7 @@ public class PgPush {
 		psSetInt(ps, 38, ll.csvInd);
 		// csv text
 		ps.setString(39, ll.csv);
-		// cluster
-		ps.setString(40, cluster);
+
 	}
 
 	private void psSetDouble(PreparedStatement ps, int i, Double val) throws SQLException {

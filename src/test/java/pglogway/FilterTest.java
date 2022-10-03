@@ -8,6 +8,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import pglogway.logdir.LogDirMainWorker;
+
 public class FilterTest extends ScenarioTest {
 
 	private static ConfDir confDir;
@@ -29,7 +31,7 @@ public class FilterTest extends ScenarioTest {
 		ExtraFileUtils.copyResourcesRecursively(
 				new URL(ExtraFileUtils.class.getResource("/scenarios/filter").toString()), new File("/tmp"));
 
-		LogDir ld = new LogDir(confDir, 0, 0);
+		LogDirMainWorker ld = new LogDirMainWorker(confDir, 0, 0);
 		ld.run();
 
 		defaultControl("/tmp/filter/", "postgresql-2021-02-08_10_31_38.csv");

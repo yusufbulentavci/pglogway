@@ -1,6 +1,6 @@
-create unlogged table if not exists hostdaylog (	hostday text not null,
+create unlogged table if not exists pgdaylog (log_time timestamp not null,	
+	cluster text,
 	host_name text not null,
-	log_time timestamp not null,
 	user_name text,
 	db_name text,
 	pg_port int,
@@ -36,6 +36,13 @@ create unlogged table if not exists hostdaylog (	hostday text not null,
 	parameters text,
 	temp_usage bigint,
 	csv_ind int,
-	csv text,
-	cluster text
-) partition by list(hostday);
+	csv text
+) partition by range(log_time);
+create index if not exists daylogtime_ind on pgdaylog(log_time);
+
+create index if not exists pgdaylog_query_hash_idx on pgdaylog(query_hash);
+
+create or replace function queryof(int) returns text
+as $$ select query from pgdaylog where query_hash=$1 limit 1 $$
+language sql;
+

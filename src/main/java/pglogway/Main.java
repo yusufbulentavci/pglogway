@@ -2,6 +2,7 @@ package pglogway;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -12,17 +13,20 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 
 import net.nbug.hexprobe.server.telnet.EasyTerminal;
+import pglogway.exceptions.GzipFailedException;
+import pglogway.exceptions.ScpFailedException;
+import pglogway.logdir.LogDirMainWorker;
 
 /**
  *
  */
 public class Main {
-	public static String version = "2.7.1";
+	public static String version = "3.0.0";
 
 	public static boolean testing = false;
 
 	static final Logger logger = LogManager.getLogger(Main.class.getName());
-	private List<LogDir> runningDirs = new ArrayList<>();
+	private List<LogDirMainWorker> runningDirs = new ArrayList<>();
 	private List<Thread> runningThreads = new ArrayList<>();
 
 	private boolean shuttingDown = false;
@@ -41,12 +45,12 @@ public class Main {
 	}
 
 	public void status(EasyTerminal terminal) throws IOException {
-		for (LogDir it : runningDirs) {
+		for (LogDirMainWorker it : runningDirs) {
 			it.status(terminal);
 		}
 	}
 
-	public static void fatal() {
+	public static void sonlan() {
 		if (one == null)
 			return;
 		if (one.shuttingDown)
@@ -57,7 +61,7 @@ public class Main {
 	protected void shutdownHook() {
 		logger.info("Shutdown signal detected");
 		this.shuttingDown = true;
-		for (LogDir logDir : runningDirs) {
+		for (LogDirMainWorker logDir : runningDirs) {
 			logDir.terminate();
 		}
 		for (Thread t : runningThreads) {
@@ -100,7 +104,7 @@ public class Main {
 			logger.info("Directory destinations:" + dirs.toString());
 
 			for (ConfDir conf : dirs) {
-				LogDir logDir = new LogDir(conf, -1, -1);
+				LogDirMainWorker logDir = new LogDirMainWorker(conf, -1, -1);
 				runningDirs.add(logDir);
 				Thread t = new Thread(logDir);
 				runningThreads.add(t);
@@ -117,19 +121,30 @@ public class Main {
 		// Convert to schedular thread
 		// Wake up ever hour
 		while (!shuttingDown) {
-			try {
-				Calendar oldday = Calendar.getInstance(); // today
-				Integer hour = oldday.get(Calendar.HOUR_OF_DAY);
-				logger.info("Maintain task is running for hour:" + hour);
-				for (LogDir ld : runningDirs) {
+			Calendar oldday = Calendar.getInstance(); // today
+			Integer hour = oldday.get(Calendar.HOUR_OF_DAY);
+			logger.info("Maintain task is running for hour:" + hour);
+			for (LogDirMainWorker ld : runningDirs) {
+				try {
 					ld.maintain(hour);
-					ld.report();
+				} catch (GzipFailedException | ScpFailedException | UnknownHostException e) {
+					logger.error("Error in maintain, shutting down;", e);
+					Main.sonlan();
 				}
-				Thread.sleep(1000 * 60 * 60);
-			} catch (InterruptedException e) {
+				ld.report();
 			}
+			Main.sleep("Maintain loop", 1000 * 60 * 60);
 		}
 
 		logger.info("Schedular is leaving...");
+	}
+
+	public static void sleep(String where, long _updateInterval) {
+		try {
+			if (logger.isDebugEnabled())
+				logger.debug("Sleep " + _updateInterval + " where:" + where);
+			Thread.sleep(_updateInterval);
+		} catch (InterruptedException e) {
+		}
 	}
 }

@@ -20,6 +20,7 @@ import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.xfer.FileSystemFile;
+import pglogway.exceptions.ScpFailedException;
 
 public class Store {
 	static final Logger logger = LogManager.getLogger(Store.class.getName());
@@ -27,7 +28,7 @@ public class Store {
 	private Set<String> existingFolders = new HashSet<String>();
 
 	public int doit(String host, String storePath, String cluster, String server, String port, String localDir,
-			int timeoutMins, boolean dontCopy) {
+			int timeoutMins, boolean dontCopy) throws ScpFailedException {
 
 		File directory = new File(localDir);
 		File[] files = directory.listFiles(new FilenameFilter() {
@@ -85,7 +86,7 @@ public class Store {
 	}
 
 	public boolean scp(String host, String storePath, String cluster, String server, String port, String dateFolder,
-			File lfile) {
+			File lfile) throws ScpFailedException {
 
 		String rdir = storePath + "/" + cluster + "/" + server + "-" + port + "/" + dateFolder;
 		String rdirAtHost = host + ":" + rdir;
@@ -120,8 +121,7 @@ public class Store {
 					}
 				} catch (IOException e1) {
 					logger.error("Failed make directory for host" + host, e1);
-					Main.fatal();
-					return false;
+					throw new ScpFailedException("Failed make directory for host" + host, e1);
 				}
 			}
 

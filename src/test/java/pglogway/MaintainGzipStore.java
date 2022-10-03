@@ -11,6 +11,9 @@ import org.apache.commons.io.FileUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import pglogway.exceptions.GzipFailedException;
+import pglogway.exceptions.ScpFailedException;
+
 public class MaintainGzipStore extends ScenarioTest {
 
 	private static ConfDir confDir;
@@ -25,7 +28,7 @@ public class MaintainGzipStore extends ScenarioTest {
 	}
 
 	@Test
-	public void denebakalim() throws IOException {
+	public void denebakalim() throws IOException, GzipFailedException, ScpFailedException {
 		File dir = new File("/tmp/maintain_gzip_store");
 		FileUtils.deleteDirectory(dir);
 		dir.mkdir();
