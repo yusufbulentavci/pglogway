@@ -292,6 +292,7 @@ public class LogLine {
 	private boolean isStatement = false;
 
 	public Integer query_hash;
+
 	@JsonGetter("query_hash")
 	public Integer getQuery_hash() {
 		return this.query_hash;
@@ -306,8 +307,6 @@ public class LogLine {
 		this.message = message;
 		this.pgPort = pgPort;
 	}
-	
-	
 
 	// 2021-02-08 10:31:38.693
 	// yyyy-MM-dd HH:mm:ss.SSS
@@ -700,7 +699,6 @@ public class LogLine {
 		return duration;
 	}
 
-
 //	public static void main(String[] args) throws ParseException {
 
 //		String str = "2021-02-08 10:31:38.692 +03";
@@ -783,6 +781,14 @@ public class LogLine {
 				+ ", bindDetail=" + bindDetail + ", virtual_session_id=" + virtual_session_id + ", tempUsage="
 				+ tempUsage + ", csvInd=" + csvInd + ", csv=" + csv + ", formatter=" + formatter + ", isStatement="
 				+ isStatement + ", query_hash=" + query_hash + "]";
+	}
+
+	// DEBUG, LOG, INFO, NOTICE
+	public boolean canBeFiltered() {
+		if (this.error_severity == null)
+			return false;
+		char c = this.error_severity.charAt(0);
+		return (c == 'I' || c == 'L' || c == 'D' || c == 'N');
 	}
 
 }
