@@ -152,12 +152,13 @@ public class LogWriter implements AutoCloseable{
 //		}
 //	}
 
-	public void write(LogLine ll, boolean canBeFiltered, AtomicInteger sentLogCount) throws FlushException {
+	public void write(LogLine ll, AtomicInteger sentLogCount) throws FlushException {
 //		logger.info(ll.toJson(fn).toString());
 		if (this.alarm != null) {
 			this.alarm.check(ll);
 		}
-		if (canBeFiltered && filtered(ll)) {
+		
+		if (ll.canBeFiltered() && filtered(ll)) {
 			Counters.one().filteredLogCount.incrementAndGet();
 			return;
 		}

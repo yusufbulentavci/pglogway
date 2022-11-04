@@ -114,17 +114,17 @@ public class PgConnection {
 
 		}
 
-		writeLog(ll, true);
+		writeLog(ll);
 	}
 
 	public void resetPbcc(boolean suc) throws FlushException {
 		this.waitDuration = false;
 
 		if (suc || statement != null) {
-			writeLog(statement, false);
+			writeLog(statement);
 		} else if (!suc) {
 			for (LogLine logLine : bastirilan) {
-				writeLog(logLine, true);
+				writeLog(logLine);
 			}
 		}
 		this.parseDur = null;
@@ -135,8 +135,8 @@ public class PgConnection {
 			this.bastirilan.clear();
 	}
 
-	private void writeLog(LogLine logLine, boolean canBeFiltered) throws FlushException {
-		logWriter.write(logLine, canBeFiltered, sentLogCount);
+	private void writeLog(LogLine logLine) throws FlushException {
+		logWriter.write(logLine, sentLogCount);
 	}
 
 }

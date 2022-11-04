@@ -23,6 +23,7 @@ public class Counters {
 		terminal.writeLine("limitElasticPushCount:" + this.limitElasticPushCount.get());
 		terminal.writeLine("limitPgPushCount:" + this.limitPgPushCount.get());
 		terminal.writeLine("elasticSent:" + this.elasticSent.get());
+		terminal.writeLine("pgSent:" + this.pgSent.get());
 		this.filteredLogCount.set(0);
 		this.limitElasticPushCount.set(0);
 		this.limitPgPushCount.set(0);

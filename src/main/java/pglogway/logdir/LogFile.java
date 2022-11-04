@@ -81,7 +81,7 @@ public class LogFile implements LogTailListener{
 	}
 
 	private void processNoSession(LogLine ll) throws FlushException {
-		logWriter.write(ll, ll.canBeFiltered(), null);
+		logWriter.write(ll, null);
 	}
 
 	public void done() {
