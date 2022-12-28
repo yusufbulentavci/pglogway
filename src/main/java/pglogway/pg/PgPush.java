@@ -10,11 +10,14 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.elasticsearch.client.Request;
+import org.elasticsearch.client.Response;
 
 import pglogway.ConfDir;
 import pglogway.DataSourceCon;
@@ -40,17 +43,20 @@ public class PgPush {
 	private String month;
 	private String day;
 	private String year;
+	private boolean checkExpiredIndexes;
+	private int expireDays;
 //	private String rangeFrom;
 //	private String rangeTo;
 
-	public PgPush(ConfDir confDir, String year, String month, String day, int hour) throws UnknownHostException, CantFindNextDayException {
+	public PgPush(ConfDir confDir, String year, String month, String day, int hour, int expireDays)
+			throws UnknownHostException, CantFindNextDayException {
 		pgCon = confDir.getPpCon();
 		this.hostname = ConfDir.getHostName();
-		this.month=month;
-		this.day=day;
-		this.year=year;
+		this.month = month;
+		this.day = day;
+		this.year = year;
 		this.defaultTableName = "log_" + year + "_" + month + "_" + day;
-		
+		this.expireDays = expireDays;
 
 		StringBuilder sb = new StringBuilder("insert into pgdaylog values (");
 		for (int i = 0; i < 38; i++)
@@ -100,10 +106,10 @@ public class PgPush {
 			try (PreparedStatement statement = con.prepareStatement(tableSql)) {
 				statement.execute();
 			} catch (SQLException e) {
-				if(logger.isDebugEnabled()) {
+				if (logger.isDebugEnabled()) {
 					logger.debug("Failed to create primary table with:" + tableSql);
 				}
-				//throw new RuntimeException(e);
+				// throw new RuntimeException(e);
 			}
 			if (logger.isDebugEnabled())
 				logger.debug("PgPush create table/done");
@@ -117,16 +123,32 @@ public class PgPush {
 		int di = Integer.parseInt(day);
 		LocalDate date = LocalDate.of(yi, mi, di);
 //		LocalDate today = nextDay(year, month, day);
-		
+
 		createPartition(date.plusDays(-1));
 		createPartition(date);
 		createPartition(date.plusDays(1));
+		getExpiredTables();
+
 	}
 
+	private void getExpiredTables() {
+		if (expireDays <= 0) {
+			return;
+		}
+		Calendar oldday = Calendar.getInstance(); // today
+		oldday.add(Calendar.DAY_OF_YEAR, -1 * expireDays);
+		
+	}
+
+//	select tablename from pg_tables where schemaname='public' and tablename like 'log_2%' and tablename<'log_2022_10_9';
 	private void createPartition(LocalDate d) {
-		String tableName = "log_" + d.getYear() + "_" + d.getMonthValue() + "_" + d.getDayOfMonth();
+		int y = d.getYear();
+		int m = d.getMonthValue();
+		int day = d.getDayOfMonth();
+		String tableName = tableName(y, m, day);
+
 		String rangeFrom = d.getYear() + "-" + d.getMonthValue() + "-" + d.getDayOfMonth();
-		LocalDate l=d.plusDays(1);
+		LocalDate l = d.plusDays(1);
 		String rangeTo = l.getYear() + "-" + l.getMonthValue() + "-" + l.getDayOfMonth();
 //		if (logger.isDebugEnabled())
 //			logger.debug("PgPush create partition table");
@@ -138,8 +160,13 @@ public class PgPush {
 				logger.debug("PgPush create partition table/done");
 		} catch (SQLException e) {
 			logger.debug("Failed to create table with:" + sql);
-			//throw new RuntimeException(e);
+			// throw new RuntimeException(e);
 		}
+	}
+
+	private String tableName(int y, int m, int day) {
+		String tableName = "log_" + y + "_" + m + "_" + day;
+		return tableName;
 	}
 
 	public void push(LogLine ll) throws FlushException {
@@ -190,6 +217,58 @@ public class PgPush {
 		}
 		if (logger.isDebugEnabled())
 			logger.debug("PgPush flush-out");
+
+		if (checkExpiredIndexes) {
+			expireIndexes();
+		}
+	}
+
+	private void expireIndexes() {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Check expire indexes for index:" + this.indexName);
+		}
+		this.checkExpiredIndexes = false;
+		if (expireDays <= 0)
+			return;
+
+		try (PreparedStatement ps = con.prepareStatement("")) {
+			Response response;
+			Request r = new Request("DELETE", toDel);
+			response = restClient.performRequest(r);
+			if (response.getStatusLine().getStatusCode() != 200) {
+				logger.info("Index deleted:" + toDel);
+				return;
+			}
+		} catch (IOException e) {
+		}
+
+		Calendar oldday = Calendar.getInstance(); // today
+		oldday.add(Calendar.DAY_OF_YEAR, -1 * expireDays);
+
+		for (int i = 0; i < 30; i++) {
+			oldday.add(Calendar.DAY_OF_YEAR, -1);
+			Integer year = oldday.get(Calendar.YEAR);
+			Integer month = oldday.get(Calendar.MONTH);
+			Integer day = oldday.get(Calendar.DAY_OF_MONTH);
+			String toDel = tableName(year, month, day);
+			deleteTable(toDel);
+		}
+	}
+
+	private void deleteTable(String toDel) {
+		if (logger.isDebugEnabled())
+			logger.debug("Check index to delete:" + toDel);
+
+		try (Prepared) {
+			Response response;
+			Request r = new Request("DELETE", toDel);
+			response = restClient.performRequest(r);
+			if (response.getStatusLine().getStatusCode() != 200) {
+				logger.info("Index deleted:" + toDel);
+				return;
+			}
+		} catch (IOException e) {
+		}
 	}
 
 	private void fill(PreparedStatement ps, LogLine ll) throws SQLException {
@@ -322,7 +401,7 @@ public class PgPush {
 	}
 
 	public void checkExpiredIndexes() {
-
+		this.checkExpiredIndexes = true;
 	}
 
 	public int getPushed() {

@@ -15,7 +15,7 @@ public class ConfDir implements ElasticConf{
 	private final String cluster;
 	private final String port;
 
-	private final int elasticExpireDays;
+	private final int expireDays;
 	private final DataSourceCon econ;
 
 	private final HourList noZip;
@@ -40,7 +40,7 @@ public class ConfDir implements ElasticConf{
 	private boolean pushPg;
 	private DataSourceCon ppCon;
 
-	public ConfDir(Boolean elasticDir, DataSourceCon econ, String path, String cluster, String port, int elasticExpireDays,
+	public ConfDir(Boolean elasticDir, DataSourceCon econ, String path, String cluster, String port, int expireDays,
 			HourList noZip, HourList noCopy, int letLogStayInMins, int hourlyGzipTimeoutInMins,
 			int hourlyStoreTimeoutInMins, String storeMethod, String storeHost, String storePath,
 			FilterByProp filterCommmand, FilterByProp filterDb, FilterByProp filterUser, FilterByProp filterLevel,
@@ -52,7 +52,7 @@ public class ConfDir implements ElasticConf{
 		this.path = path;
 		this.cluster = cluster;
 		this.port = port;
-		this.elasticExpireDays = elasticExpireDays;
+		this.expireDays = expireDays;
 		this.noZip = noZip;
 		this.noCopy = noCopy;
 		this.storeMethod = storeMethod;
@@ -82,8 +82,8 @@ public class ConfDir implements ElasticConf{
 		return port;
 	}
 
-	public int getElasticExpireDays() {
-		return elasticExpireDays;
+	public int getExpireDays() {
+		return expireDays;
 	}
 
 	public DataSourceCon getEcon() {
@@ -189,7 +189,7 @@ public class ConfDir implements ElasticConf{
 	@Override
 	public String toString() {
 		return "ConfDir [path=" + path + ", cluster=" + cluster + ", port=" + port + ", elasticExpireDays="
-				+ elasticExpireDays + ", econ=" + econ + ", noZip=" + noZip + ", noCopy=" + noCopy
+				+ expireDays + ", econ=" + econ + ", noZip=" + noZip + ", noCopy=" + noCopy
 				+ ", letLogStayInMins=" + letLogStayInMins + ", hourlyGzipTimeoutInMins=" + hourlyGzipTimeoutInMins
 				+ ", hourlyStoreTimeoutInMins=" + hourlyStoreTimeoutInMins + ", storeMethod=" + storeMethod
 				+ ", storeHost=" + storeHost + ", storePath=" + storePath + ", filterCommand=" + filterCommand

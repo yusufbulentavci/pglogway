@@ -136,12 +136,14 @@ public class Store {
 				// Make sure JZlib is in classpath for this to work
 				ssh.useCompression();
 				ssh.newSCPFileTransfer().upload(new FileSystemFile(lfile), rdir);
+				Counters.one().copied.incrementAndGet();
 				if (logger.isDebugEnabled()) {
 					logger.debug("File sent:" + lfile.getAbsolutePath());
 				}
 
 			} catch (IOException e1) {
 				logger.error("Failed make directory for host" + host, e1);
+				Counters.one().failedCopied.incrementAndGet();
 				return false;
 			}
 		}

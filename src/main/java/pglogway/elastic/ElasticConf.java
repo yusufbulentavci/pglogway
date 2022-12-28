@@ -10,6 +10,6 @@ public interface ElasticConf {
 
 	DataSourceCon getEcon();
 
-	int getElasticExpireDays();
+	int getExpireDays();
 
 }

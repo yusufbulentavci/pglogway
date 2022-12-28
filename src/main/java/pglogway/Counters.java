@@ -17,6 +17,10 @@ public class Counters {
 	AtomicLong limitPgPushCount = new AtomicLong();
 	AtomicLong elasticSent = new AtomicLong();
 	AtomicLong pgSent = new AtomicLong();
+	AtomicLong zipped = new AtomicLong();
+	AtomicLong copied = new AtomicLong();
+	AtomicLong failedZipped = new AtomicLong();
+	AtomicLong failedCopied = new AtomicLong();
 
 	public void status(EasyTerminal terminal) throws IOException {
 		terminal.writeLine("filteredLogCount:" + this.filteredLogCount.get());
@@ -24,11 +28,19 @@ public class Counters {
 		terminal.writeLine("limitPgPushCount:" + this.limitPgPushCount.get());
 		terminal.writeLine("elasticSent:" + this.elasticSent.get());
 		terminal.writeLine("pgSent:" + this.pgSent.get());
+		terminal.writeLine("pgSent:" + this.zipped.get());
+		terminal.writeLine("copied:" + this.copied.get());
+		terminal.writeLine("failedZipped:" + this.failedZipped.get());
+		terminal.writeLine("failedCopied:" + this.failedCopied.get());
 		this.filteredLogCount.set(0);
 		this.limitElasticPushCount.set(0);
 		this.limitPgPushCount.set(0);
 		this.elasticSent.set(0);
 		this.pgSent.set(0);
+		this.zipped.set(0);
+		this.copied.set(0);
+		this.failedZipped.set(0);
+		this.failedCopied.set(0);
 	}
 
 }

@@ -192,7 +192,7 @@ public class ElasticPush {
 			logger.debug("Check expire indexes for index:" + this.indexName);
 		}
 		this.checkExpiredIndexes = false;
-		int expireDays = confDir.getElasticExpireDays();
+		int expireDays = confDir.getExpireDays();
 		if (expireDays <= 0)
 			return;
 		Calendar oldday = Calendar.getInstance(); // today

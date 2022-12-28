@@ -84,7 +84,7 @@ public class LogWriter implements AutoCloseable{
 			}
 			
 			if(confDir.isPushPg()) {
-				this.pgPush = new PgPush(confDir, year, month, day, hour);
+				this.pgPush = new PgPush(confDir, year, month, day, hour, confDir.getExpireDays());
 			}else {
 				this.pgPush = null;
 			}

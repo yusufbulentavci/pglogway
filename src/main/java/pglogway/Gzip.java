@@ -81,6 +81,7 @@ public class Gzip {
 			gzipOS.close();
 			fos.close();
 			fis.close();
+			Counters.one().zipped.incrementAndGet();
 			source.delete();
 			if (logger.isDebugEnabled()) {
 				logger.debug("Compressed:" + file.getAbsolutePath());
@@ -88,6 +89,7 @@ public class Gzip {
 			return true;
 		} catch (IOException e) {
 			logger.error("Failed to zip file:" + file.getAbsolutePath(), e);
+			Counters.one().failedZipped.incrementAndGet();
 			throw new GzipFailedException("Failed to zip file:" + file.getAbsolutePath(), e);
 		}
 	}
